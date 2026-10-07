@@ -1,0 +1,45 @@
+---
+---
+<section id="signup" class="signup stack">
+  <h2>Follow the build</h2>
+  <p>
+    Every other Sunday: the new episode and one prompt from that week of training, including the weeks that go
+    badly.
+  </p>
+  <!-- TODO: point this at the email provider once it's picked. Disabled until then. -->
+  <form class="form" action="#" method="post" aria-describedby="signup-note">
+    <label class="visually-hidden" for="email">Email</label>
+    <input id="email" name="email" type="email" placeholder="you@example.com" required disabled />
+    <button type="submit" disabled>Join</button>
+  </form>
+  <p id="signup-note" class="muted">Signup opens soon.</p>
+</section>
+
+<style>
+  @layer components {
+    .signup {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: var(--space-l) var(--space-m);
+    }
+    .form { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    input {
+      flex: 1 1 16rem;
+      padding: 0.7em 1em;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    button {
+      padding: 0.7em 1.4em;
+      border: 0;
+      border-radius: 999px;
+      background: var(--ink);
+      color: var(--bg);
+      font-weight: 600;
+    }
+    :disabled { opacity: 0.6; cursor: not-allowed; }
+  }
+</style>

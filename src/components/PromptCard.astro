@@ -1,0 +1,38 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  prompt: CollectionEntry<'prompts'>;
+}
+const { prompt } = Astro.props;
+const { title, summary, order } = prompt.data;
+---
+<article class="card" style={`view-transition-name: prompt-${prompt.id}`}>
+  <p class="num">Prompt {order}</p>
+  <h3><a href={`/prompts/${prompt.id}/`}>{title}</a></h3>
+  <p class="muted">{summary}</p>
+</article>
+
+<style>
+  @layer components {
+    .card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: var(--space-m);
+      display: grid;
+      gap: 0.5rem;
+      align-content: start;
+    }
+    .card:has(a:hover, a:focus-visible) { border-color: var(--accent); }
+    /* Whole card is clickable without nesting block content in the link. */
+    .card a { text-decoration: none; }
+    .card a::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+    .num {
+      font-family: var(--font-mono);
+      font-size: var(--step--1);
+      color: var(--accent);
+    }
+  }
+</style>

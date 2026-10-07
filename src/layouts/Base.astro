@@ -1,0 +1,60 @@
+---
+import '../styles/global.css';
+import Disclaimer from '../components/Disclaimer.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = 'The prompts and setup I use to have Claude coach my triathlon training, from a missed sub-5 to a first Ironman.',
+} = Astro.props;
+const fullTitle = title === 'Home' ? 'AI Tri Coach' : `${title} · AI Tri Coach`;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>{fullTitle}</title>
+  </head>
+  <body>
+    <header class="site-header wrap">
+      <a href="/" class="brand">AI Tri Coach</a>
+      <nav aria-label="Main">
+        <a href="/kit/">Starter kit</a>
+        <a href="/#signup">Newsletter</a>
+      </nav>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer class="site-footer wrap stack">
+      <Disclaimer />
+      <p class="muted">&copy; {new Date().getFullYear()} James Rozy</p>
+    </footer>
+  </body>
+</html>
+
+<style>
+  @layer components {
+    .site-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-s);
+      padding-block: var(--space-s);
+    }
+    .brand { font-weight: 700; text-decoration: none; view-transition-name: brand; }
+    nav { display: flex; gap: var(--space-s); font-size: var(--step--1); }
+    .site-footer {
+      border-block-start: 1px solid var(--line);
+      padding-block: var(--space-l);
+      font-size: var(--step--1);
+    }
+  }
+</style>

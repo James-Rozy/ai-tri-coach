@@ -1,0 +1,117 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import PromptCard from '../components/PromptCard.astro';
+import Signup from '../components/Signup.astro';
+
+const prompts = (await getCollection('prompts', ({ data }) => data.tier === 'free')).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+
+// From the 70.3 Michigan (Frankfort) race analysis, 2026-09-20. Minutes lost on land vs a sub-5 day.
+const lost = [
+  { leg: 'Bike', minutes: 10, note: 'Dropped chain on the first climb, then a cramping last quarter', color: 'var(--bike)' },
+  { leg: 'Run', minutes: 7, note: 'Stops at mile 4 (cramps) and mile 9', color: 'var(--run)' },
+  { leg: 'Transitions', minutes: 6, note: 'Calf cramps stripping the wetsuit in T1', color: 'var(--swim)' },
+];
+const maxLost = Math.max(...lost.map((l) => l.minutes));
+---
+<Base title="Home">
+  <section class="hero wrap section stack">
+    <p class="eyebrow">Missed sub-5. Starting over with an AI coach.</p>
+    <h1>The exact prompts I use to have Claude coach my triathlon training.</h1>
+    <p class="lede muted">
+      I'm a frontend developer and age-group triathlete. After missing sub-5 at 70.3 Michigan, I'm letting Claude
+      coach me to a rematch and then my first Ironman, using my real training data. This is the setup, free to copy.
+    </p>
+    <div class="actions">
+      <a class="button" href="/kit/">Get the free starter kit</a>
+      <a href="#signup">Follow the build</a>
+    </div>
+  </section>
+
+  <!--
+    TODO(James): the swim/bike/run course line. Plan: an SVG path that draws with a scroll-driven
+    animation (animation-timeline: view()) and reveals each leg's minutes as it passes.
+  -->
+  <section class="wrap section stack" aria-labelledby="lost-heading">
+    <h2 id="lost-heading">Where the 23 minutes went</h2>
+    <p class="muted">
+      The first thing I asked Claude was where my race went wrong. I was 7th out of the water and finished 46th. All
+      of the time was lost on land.
+    </p>
+    <ol class="lost">
+      {lost.map((l) => (
+        <li style={`--share: ${l.minutes / maxLost}; --leg: ${l.color}`}>
+          <span class="leg">{l.leg}</span>
+          <span class="bar" aria-hidden="true"></span>
+          <span class="mins">~{l.minutes} min</span>
+          <span class="note muted">{l.note}</span>
+        </li>
+      ))}
+    </ol>
+    <p><a href="/prompts/race-debrief/">The debrief prompt I used</a></p>
+  </section>
+
+  <section class="wrap section stack" aria-labelledby="kit-heading">
+    <h2 id="kit-heading">The starter kit</h2>
+    <p class="muted">Four prompts and a setup guide. One evening to set up, then a few minutes a week.</p>
+    <div class="grid">
+      {prompts.map((prompt) => <PromptCard prompt={prompt} />)}
+    </div>
+  </section>
+
+  <div class="wrap section">
+    <Signup />
+  </div>
+</Base>
+
+<style>
+  @layer components {
+    .hero { --stack-gap: var(--space-m); padding-block-start: var(--space-l); }
+    .hero h1 { max-inline-size: 18ch; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: var(--step--1);
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .lede { font-size: var(--step-1); }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-m); }
+    .button {
+      display: inline-block;
+      padding: 0.8em 1.5em;
+      border-radius: 999px;
+      background: var(--ink);
+      color: var(--bg);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .lost { list-style: none; padding: 0; display: grid; gap: var(--space-m); }
+    .lost li {
+      display: grid;
+      grid-template-columns: 7rem 1fr auto;
+      grid-template-areas: "leg bar mins" ". note note";
+      align-items: center;
+      column-gap: var(--space-s);
+    }
+    .leg { grid-area: leg; font-weight: 600; }
+    .bar {
+      grid-area: bar;
+      block-size: 0.75rem;
+      border-radius: 999px;
+      background: var(--leg);
+      inline-size: calc(var(--share) * 100%);
+    }
+    .mins { grid-area: mins; font-family: var(--font-mono); }
+    .note { grid-area: note; font-size: var(--step--1); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+      gap: var(--space-s);
+    }
+  }
+</style>
