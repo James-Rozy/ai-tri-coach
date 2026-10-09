@@ -1,0 +1,47 @@
+@layer components {
+  .hero { --stack-gap: var(--space-m); padding-block-start: var(--space-l); }
+  .hero h1 { max-inline-size: 18ch; }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .lede { font-size: var(--step-1); }
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-m); }
+  .button {
+    display: inline-block;
+    padding: 0.8em 1.5em;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--bg);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .lost { list-style: none; padding: 0; display: grid; gap: var(--space-m); }
+  .lost li {
+    display: grid;
+    grid-template-columns: 7rem 1fr auto;
+    grid-template-areas: "leg bar mins" ". note note";
+    align-items: center;
+    column-gap: var(--space-s);
+  }
+  .leg { grid-area: leg; font-weight: 600; }
+  .bar {
+    grid-area: bar;
+    block-size: 0.75rem;
+    border-radius: 999px;
+    background: var(--leg);
+    inline-size: calc(var(--share) * 100%);
+  }
+  .mins { grid-area: mins; font-family: var(--font-mono); }
+  .note { grid-area: note; font-size: var(--step--1); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+    gap: var(--space-s);
+  }
+}

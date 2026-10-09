@@ -1,0 +1,6 @@
+@layer components {
+  .kit { --stack-gap: var(--space-m); max-inline-size: 48rem; }
+  .steps { display: grid; gap: var(--space-s); padding-inline-start: 1.25em; }
+  .prompt { --stack-gap: var(--space-s); padding-block-start: var(--space-m); }
+  .head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-s); }
+}

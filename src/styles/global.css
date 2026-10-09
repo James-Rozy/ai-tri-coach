@@ -1,0 +1,89 @@
+/* Layer order: later layers win, so components and utilities never fight reset specificity. */
+@layer reset, tokens, base, layout, components, utilities;
+
+@layer reset {
+  *, *::before, *::after { box-sizing: border-box; }
+  * { margin: 0; }
+  html { -webkit-text-size-adjust: none; text-size-adjust: none; }
+  img, svg, video { display: block; max-inline-size: 100%; }
+  input, button, textarea, select { font: inherit; }
+}
+
+@layer tokens {
+  :root {
+    color-scheme: light dark;
+
+    /* One hue per leg; used for accents, the course line, and data. */
+    --swim: oklch(62% 0.13 235);
+    --bike: oklch(66% 0.16 55);
+    --run: oklch(62% 0.17 150);
+
+    --bg: light-dark(oklch(98.5% 0.005 240), oklch(17% 0.015 250));
+    --surface: light-dark(oklch(100% 0 0), oklch(22% 0.018 250));
+    --ink: light-dark(oklch(22% 0.02 250), oklch(94% 0.01 250));
+    --ink-muted: light-dark(oklch(45% 0.02 250), oklch(72% 0.015 250));
+    --line: light-dark(oklch(88% 0.01 250), oklch(32% 0.02 250));
+    --accent: var(--swim);
+
+    --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+    --step--1: clamp(0.83rem, 0.8rem + 0.15vw, 0.94rem);
+    --step-0: clamp(1rem, 0.95rem + 0.25vw, 1.13rem);
+    --step-1: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+    --step-2: clamp(1.56rem, 1.35rem + 1vw, 2.2rem);
+    --step-3: clamp(2rem, 1.5rem + 2.4vw, 3.6rem);
+
+    --space-s: clamp(0.75rem, 0.7rem + 0.25vw, 1rem);
+    --space-m: clamp(1.25rem, 1.1rem + 0.75vw, 2rem);
+    --space-l: clamp(2rem, 1.6rem + 2vw, 4rem);
+    --space-xl: clamp(3rem, 2.2rem + 4vw, 7rem);
+
+    --radius: 14px;
+    --gutter: 16px;
+    --max: 72rem;
+  }
+  /* Manual override hooks for a future theme toggle. */
+  :root[data-theme="light"] { color-scheme: light; }
+  :root[data-theme="dark"] { color-scheme: dark; }
+}
+
+@layer base {
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: var(--step-0);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { line-height: 1.15; text-wrap: balance; letter-spacing: -0.02em; }
+  h1 { font-size: var(--step-3); }
+  h2 { font-size: var(--step-2); }
+  h3 { font-size: var(--step-1); }
+  p { text-wrap: pretty; max-inline-size: 65ch; }
+  a { color: inherit; text-decoration-color: var(--accent); text-underline-offset: 0.2em; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+}
+
+@layer layout {
+  .wrap {
+    inline-size: min(100% - 2 * var(--gutter), var(--max));
+    margin-inline: auto;
+  }
+  .stack > * + * { margin-block-start: var(--stack-gap, var(--space-s)); }
+  .section { padding-block: var(--space-xl); }
+}
+
+@layer utilities {
+  .muted { color: var(--ink-muted); }
+  .visually-hidden {
+    position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden;
+    clip-path: inset(50%); white-space: nowrap;
+  }
+}
