@@ -20,11 +20,20 @@ const fullTitle = title === 'Home' ? 'AI Tri Coach' : `${title} · AI Tri Coach`
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=JetBrains+Mono:wght@400;600&display=swap"
+    />
     <title>{fullTitle}</title>
   </head>
   <body>
     <header class="site-header wrap">
-      <a href="/" class="brand">AI Tri Coach</a>
+      <a href="/" class="brand">
+        <span class="bib" aria-hidden="true">BIB 2073</span>
+        <span>AI Tri Coach</span>
+      </a>
       <nav aria-label="Main">
         <a href="/kit/">Starter kit</a>
         <a href="/#signup">Newsletter</a>
@@ -49,8 +58,33 @@ const fullTitle = title === 'Home' ? 'AI Tri Coach' : `${title} · AI Tri Coach`
       gap: var(--space-s);
       padding-block: var(--space-s);
     }
-    .brand { font-weight: 700; text-decoration: none; view-transition-name: brand; }
-    nav { display: flex; gap: var(--space-s); font-size: var(--step--1); }
+    .site-header { border-block-end: 1px solid var(--line); }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 800;
+      font-stretch: 112%;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      text-decoration: none;
+      view-transition-name: brand;
+    }
+    .bib {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: var(--accent);
+      color: var(--on-accent);
+      padding: 0.25em 0.5em;
+      border-radius: 4px;
+      letter-spacing: 0;
+    }
+    nav { display: flex; gap: var(--space-m); font-size: var(--step--1); white-space: nowrap; }
+    .brand { white-space: nowrap; }
+    @media (width < 30rem) { .bib { display: none; } }
+    nav a { text-decoration: none; }
+    nav a:hover { color: var(--accent); }
     .site-footer {
       border-block-start: 1px solid var(--line);
       padding-block: var(--space-l);

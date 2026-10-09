@@ -8,26 +8,62 @@ const prompts = (await getCollection('prompts', ({ data }) => data.tier === 'fre
   (a, b) => a.data.order - b.data.order,
 );
 
-// From the 70.3 Michigan (Frankfort) race analysis, 2026-09-20. Minutes lost on land vs a sub-5 day.
+// Official result, Ironman 70.3 Michigan (Frankfort), 2026-09-20. Bib 2073, M25-29.
+const splits = [
+  { leg: 'Swim', time: '0:30:26', note: '7th in division', color: 'var(--swim)' },
+  { leg: 'T1', time: '0:09:04', note: 'calf cramps', color: 'var(--trans)' },
+  { leg: 'Bike', time: '2:45:40', note: '36th', color: 'var(--bike)' },
+  { leg: 'T2', time: '0:04:18', note: '', color: 'var(--trans)' },
+  { leg: 'Run', time: '1:53:28', note: '46th', color: 'var(--run)' },
+];
+
+// From the race analysis: minutes lost on land vs a sub-5 day.
 const lost = [
   { leg: 'Bike', minutes: 10, note: 'Dropped chain on the first climb, then a cramping last quarter', color: 'var(--bike)' },
   { leg: 'Run', minutes: 7, note: 'Stops at mile 4 (cramps) and mile 9', color: 'var(--run)' },
-  { leg: 'Transitions', minutes: 6, note: 'Calf cramps stripping the wetsuit in T1', color: 'var(--swim)' },
+  { leg: 'Transitions', minutes: 6, note: 'Calf cramps stripping the wetsuit in T1', color: 'var(--trans)' },
 ];
 const maxLost = Math.max(...lost.map((l) => l.minutes));
 ---
 <Base title="Home">
-  <section class="hero wrap section stack">
-    <p class="eyebrow">Any sport. Tested in public on an Ironman.</p>
-    <h1>Use AI to coach yourself at the sport you want to get better at.</h1>
-    <p class="lede muted">
-      Running, cycling, swimming, triathlon, golf, or anything else with a goal you can measure. These are the prompts
-      and setup I use with Claude, free to copy. I'm the test case: after missing sub-5 at 70.3 Michigan, I'm letting
-      Claude coach me to a rematch and then my first Ironman, misses included.
-    </p>
-    <div class="actions">
-      <a class="button" href="/kit/">Get the free starter kit</a>
-      <a href="#signup">Follow the build</a>
+  <section class="hero wrap">
+    <div class="hero-copy stack">
+      <p class="label">Any sport · Tested in public on an Ironman</p>
+      <h1>Use AI to coach yourself at the sport you want to get better at.</h1>
+      <p class="lede muted">
+        Running, cycling, swimming, triathlon, golf, or anything else with a goal you can measure. These are the
+        prompts and setup I use with Claude, free to copy. I'm the test case: after missing sub-5 at 70.3 Michigan,
+        I'm letting Claude coach me to a rematch and then my first Ironman, misses included.
+      </p>
+      <div class="actions">
+        <a class="button" href="/kit/">Get the free starter kit</a>
+        <a href="#signup">Follow the build</a>
+      </div>
+    </div>
+
+    <div class="hero-media">
+      <!-- TODO: swap in a FinisherPix finish-line shot (portrait, ~1200px wide) via astro:assets <Image />. -->
+      <figure class="photo" aria-label="Finish line photo placeholder">
+        <span class="mono">[ FINISH PHOTO · FINISHERPIX ]</span>
+      </figure>
+
+      <div class="splits mono" aria-label="Official splits, Ironman 70.3 Michigan 2026">
+        <div class="splits-head"><span>70.3 Michigan · Bib 2073</span><span>Goal 4:59:59</span></div>
+        <dl>
+          {splits.map((s) => (
+            <div class="split" style={`--leg: ${s.color}`}>
+              <dt>{s.leg}</dt>
+              <dd class="time">{s.time}</dd>
+              <dd class="split-note">{s.note}</dd>
+            </div>
+          ))}
+        </dl>
+        <div class="finish">
+          <span>Finish</span>
+          <span class="finish-time">5:22:56</span>
+          <span class="over">+22:57</span>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -36,18 +72,18 @@ const maxLost = Math.max(...lost.map((l) => l.minutes));
     animation (animation-timeline: view()) and reveals each leg's minutes as it passes.
   -->
   <section class="wrap section stack" aria-labelledby="lost-heading">
-    <p class="eyebrow">The test case: me</p>
+    <p class="label">The test case: me</p>
     <h2 id="lost-heading">Where my 23 minutes went</h2>
     <p class="muted">
-      The first thing I asked Claude was where my race went wrong. I was 7th out of the water and finished 46th. All
-      of the time was lost on land.
+      The first thing I asked Claude was where my race went wrong. I was 7th in my division out of the water and
+      finished 46th. All of the time was lost on land.
     </p>
     <ol class="lost">
       {lost.map((l) => (
         <li style={`--share: ${l.minutes / maxLost}; --leg: ${l.color}`}>
           <span class="leg">{l.leg}</span>
           <span class="bar" aria-hidden="true"></span>
-          <span class="mins">~{l.minutes} min</span>
+          <span class="mins mono">−{l.minutes}:00</span>
           <span class="note muted">{l.note}</span>
         </li>
       ))}
@@ -56,8 +92,10 @@ const maxLost = Math.max(...lost.map((l) => l.minutes));
   </section>
 
   <section class="wrap section stack" aria-labelledby="kit-heading">
-    <h2 id="kit-heading">The starter kit</h2>
-    <p class="muted">Four prompts and a setup guide that work for any sport. One evening to set up, then a few minutes a week.</p>
+    <div class="section-head">
+      <h2 id="kit-heading">The starter kit</h2>
+      <span class="mono muted">4 prompts · free · any sport</span>
+    </div>
     <div class="grid">
       {prompts.map((prompt) => <PromptCard prompt={prompt} />)}
     </div>
@@ -70,46 +108,118 @@ const maxLost = Math.max(...lost.map((l) => l.minutes));
 
 <style>
   @layer components {
-    .hero { --stack-gap: var(--space-m); padding-block-start: var(--space-l); }
-    .hero h1 { max-inline-size: 18ch; }
-    .eyebrow {
-      font-family: var(--font-mono);
-      font-size: var(--step--1);
-      color: var(--accent);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
+    .hero {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+      gap: var(--space-l);
+      align-items: center;
+      padding-block: var(--space-l) var(--space-xl);
     }
-    .lede { font-size: var(--step-1); }
+    .hero-copy { --stack-gap: var(--space-m); }
+    .lede { font-size: var(--step-1); line-height: 1.5; }
     .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-m); }
     .button {
       display: inline-block;
-      padding: 0.8em 1.5em;
-      border-radius: 999px;
-      background: var(--ink);
-      color: var(--bg);
-      font-weight: 600;
+      padding: 0.9em 1.5em;
+      border-radius: 6px;
+      background: var(--accent);
+      color: var(--on-accent);
+      font-weight: 700;
       text-decoration: none;
+    }
+    .button:hover { filter: brightness(1.08); }
+
+    .hero-media { position: relative; display: grid; }
+    .photo {
+      grid-area: 1 / 1;
+      aspect-ratio: 4 / 5;
+      inline-size: 85%;
+      justify-self: end;
+      display: grid;
+      place-items: start end;
+      padding: var(--space-m);
+      border-radius: var(--radius);
+      border: 1px dashed var(--line);
+      background:
+        repeating-linear-gradient(135deg, transparent 0 14px, rgb(255 255 255 / 0.03) 14px 28px),
+        var(--surface);
+      color: var(--ink-faint);
+      font-size: var(--step--1);
+    }
+    .splits {
+      grid-area: 1 / 1;
+      align-self: end;
+      inline-size: min(100%, 24rem);
+      margin-block-end: -1.5rem;
+      background: rgb(21 26 33 / 0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: var(--space-m);
+      display: grid;
+      gap: 0.9rem;
+      font-size: var(--step--1);
+    }
+    .splits-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.75rem;
+    }
+    .splits dl { display: grid; gap: 0.5rem; }
+    .split {
+      display: grid;
+      grid-template-columns: 3.5rem auto 1fr;
+      gap: 0.75rem;
+      align-items: baseline;
+      border-inline-start: 3px solid var(--leg);
+      padding-inline-start: 0.6rem;
+    }
+    .split dt { text-transform: uppercase; }
+    .split-note { color: var(--ink-faint); text-align: end; }
+    .finish {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      border-block-start: 1px dashed var(--line);
+      padding-block-start: 0.9rem;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+    .finish-time { font-size: var(--step-2); font-weight: 600; color: var(--ink); }
+    .over { margin-inline-start: auto; color: var(--accent); font-weight: 600; }
+
+    /* Phones: photo on top, splits card overlapping its bottom edge. */
+    @media (width < 40rem) {
+      .hero-media { display: flex; flex-direction: column; }
+      .photo { inline-size: 100%; aspect-ratio: 4 / 3; }
+      .splits { inline-size: 100%; margin-block: -3rem 0; justify-self: auto; }
+      .lost li { grid-template-columns: 7rem 1fr auto; }
     }
 
     .lost { list-style: none; padding: 0; display: grid; gap: var(--space-m); }
     .lost li {
       display: grid;
-      grid-template-columns: 7rem 1fr auto;
+      grid-template-columns: 9rem 1fr auto;
       grid-template-areas: "leg bar mins" ". note note";
       align-items: center;
       column-gap: var(--space-s);
     }
-    .leg { grid-area: leg; font-weight: 600; }
+    .leg { grid-area: leg; font-weight: 700; text-transform: uppercase; }
     .bar {
       grid-area: bar;
-      block-size: 0.75rem;
+      block-size: 0.6rem;
       border-radius: 999px;
       background: var(--leg);
       inline-size: calc(var(--share) * 100%);
     }
-    .mins { grid-area: mins; font-family: var(--font-mono); }
+    .mins { grid-area: mins; font-weight: 600; }
     .note { grid-area: note; font-size: var(--step--1); }
 
+    .section-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--space-s); }
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
