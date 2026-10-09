@@ -11,6 +11,8 @@ const prompts = defineCollection({
     // "free" ships in the starter kit; "paid" stays behind the membership later.
     tier: z.enum(['free', 'paid']).default('free'),
     useWhen: z.string(),
+    // Short filled-in fragments that show the prompt works beyond triathlon.
+    examples: z.array(z.string()).default([]),
   }),
 });
 

@@ -18,11 +18,12 @@ const maxLost = Math.max(...lost.map((l) => l.minutes));
 ---
 <Base title="Home">
   <section class="hero wrap section stack">
-    <p class="eyebrow">Missed sub-5. Starting over with an AI coach.</p>
-    <h1>The exact prompts I use to have Claude coach my triathlon training.</h1>
+    <p class="eyebrow">Any sport. Tested in public on an Ironman.</p>
+    <h1>Use AI to coach yourself at the sport you want to get better at.</h1>
     <p class="lede muted">
-      I'm a frontend developer and age-group triathlete. After missing sub-5 at 70.3 Michigan, I'm letting Claude
-      coach me to a rematch and then my first Ironman, using my real training data. This is the setup, free to copy.
+      Running, cycling, swimming, triathlon, golf, or anything else with a goal you can measure. These are the prompts
+      and setup I use with Claude, free to copy. I'm the test case: after missing sub-5 at 70.3 Michigan, I'm letting
+      Claude coach me to a rematch and then my first Ironman, misses included.
     </p>
     <div class="actions">
       <a class="button" href="/kit/">Get the free starter kit</a>
@@ -35,7 +36,8 @@ const maxLost = Math.max(...lost.map((l) => l.minutes));
     animation (animation-timeline: view()) and reveals each leg's minutes as it passes.
   -->
   <section class="wrap section stack" aria-labelledby="lost-heading">
-    <h2 id="lost-heading">Where the 23 minutes went</h2>
+    <p class="eyebrow">The test case: me</p>
+    <h2 id="lost-heading">Where my 23 minutes went</h2>
     <p class="muted">
       The first thing I asked Claude was where my race went wrong. I was 7th out of the water and finished 46th. All
       of the time was lost on land.
@@ -50,12 +52,12 @@ const maxLost = Math.max(...lost.map((l) => l.minutes));
         </li>
       ))}
     </ol>
-    <p><a href="/prompts/race-debrief/">The debrief prompt I used</a></p>
+    <p><a href="/prompts/performance-debrief/">The debrief prompt I used</a>, which works for a round of golf or a 10K just as well.</p>
   </section>
 
   <section class="wrap section stack" aria-labelledby="kit-heading">
     <h2 id="kit-heading">The starter kit</h2>
-    <p class="muted">Four prompts and a setup guide. One evening to set up, then a few minutes a week.</p>
+    <p class="muted">Four prompts and a setup guide that work for any sport. One evening to set up, then a few minutes a week.</p>
     <div class="grid">
       {prompts.map((prompt) => <PromptCard prompt={prompt} />)}
     </div>

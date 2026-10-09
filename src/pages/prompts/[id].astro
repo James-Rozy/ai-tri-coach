@@ -2,6 +2,7 @@
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import CopyButton from '../../components/CopyButton.astro';
+import Examples from '../../components/Examples.astro';
 
 export async function getStaticPaths() {
   // Only free prompts get public pages; paid ones will live behind the membership.
@@ -24,6 +25,7 @@ const textId = `text-${prompt.id}`;
     <p><strong>Use it:</strong> {prompt.data.useWhen}</p>
     <div class="prompt-text" id={textId}><Content /></div>
     <CopyButton target={textId} />
+    <Examples examples={prompt.data.examples} />
     <p><a href="/kit/">See the full starter kit</a></p>
   </article>
 </Base>
