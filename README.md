@@ -23,6 +23,10 @@ npm run build    # static output in dist/
 
 Already wired: native cross-document view transitions (`@view-transition`), with prompt cards morphing into their prompt page through a shared `view-transition-name`, plus reduced-motion handling.
 
+## React components
+
+The React integration (`@astrojs/react`) is on, so interactive pieces can be written as `.tsx` components and used in any `.astro` page. A React component renders to static HTML and ships no JS unless you give it a `client:*` directive (`client:visible`, `client:load`, `client:idle`), so only the interactive islands cost anything.
+
 ## Open items
 
 - Signup form is disabled until an email provider is picked.
