@@ -11,6 +11,11 @@ const {
   title,
   description = 'Prompts and a setup for using Claude as your coach in any sport, tested in public on my build to a first Ironman.',
 } = Astro.props;
+const socials = [
+  { name: 'YouTube', href: 'https://www.youtube.com/@splitdecisionscoach' },
+  { name: 'Instagram', href: 'https://www.instagram.com/splitdecisionscoach/' },
+  { name: 'TikTok', href: 'https://www.tiktok.com/@splitdecisionscoach' },
+];
 const fullTitle = title === 'Home' ? 'Split Decisions' : `${title} · Split Decisions`;
 ---
 <!doctype html>
@@ -44,6 +49,12 @@ const fullTitle = title === 'Home' ? 'Split Decisions' : `${title} · Split Deci
     </main>
     <footer class="site-footer wrap stack">
       <Disclaimer />
+      <nav class="socials mono" aria-label="Split Decisions elsewhere">
+        <span class="handle">@splitdecisionscoach</span>
+        <ul>
+          {socials.map((s) => <li><a href={s.href} rel="me">{s.name}</a></li>)}
+        </ul>
+      </nav>
       <p class="muted">&copy; {new Date().getFullYear()} James Rozy</p>
     </footer>
   </body>
@@ -70,6 +81,9 @@ const fullTitle = title === 'Home' ? 'Split Decisions' : `${title} · Split Deci
       text-decoration: none;
       view-transition-name: brand;
     }
+    .socials { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-s); font-size: var(--step--1); }
+    .handle { color: var(--accent); }
+    .socials ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-s); }
     .bib {
       font-family: var(--font-mono);
       font-size: 0.75rem;
