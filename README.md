@@ -1,6 +1,6 @@
-# ai-tri-coach
+# Split Decisions
 
-Site for the AI self-coaching prompt library: a free starter kit now, a paid membership later. The repo name is a placeholder until the site has a name.
+Site for Split Decisions, the AI self-coaching prompt library: a free starter kit now. The repo name `ai-tri-coach` is left over from before the name was picked.
 
 ## Run it
 
