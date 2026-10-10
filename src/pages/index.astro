@@ -3,6 +3,11 @@ import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import PromptCard from '../components/PromptCard.astro';
 import Signup from '../components/Signup.astro';
+import { Image } from 'astro:assets';
+import finishChute from '../assets/photos/finish-chute.jpg';
+import swimExit from '../assets/photos/swim-exit.jpg';
+import bike from '../assets/photos/bike.jpg';
+import run from '../assets/photos/run.jpg';
 
 const prompts = (await getCollection('prompts', ({ data }) => data.tier === 'free')).sort(
   (a, b) => a.data.order - b.data.order,
@@ -24,6 +29,13 @@ const lost = [
   { leg: 'Transitions', minutes: 6, note: 'Calf cramps stripping the wetsuit in T1', color: 'var(--trans)' },
 ];
 const maxLost = Math.max(...lost.map((l) => l.minutes));
+
+// Race photos (FinisherPix), one per leg.
+const legPhotos = [
+  { src: swimExit, leg: 'Swim', time: '0:30:26', caption: '7th in my division out of the water', alt: 'James running out of the lake after the swim in a wetsuit and green cap', color: 'var(--swim)' },
+  { src: bike, leg: 'Bike', time: '2:45:40', caption: 'Dropped chain, then cramps late', alt: 'James riding his road bike toward the camera on the bike course', color: 'var(--bike)' },
+  { src: run, leg: 'Run', time: '1:53:28', caption: 'Two stops, otherwise 7:40 to 7:59 a mile', alt: 'James running on the run course wearing bib 2073', color: 'var(--run)' },
+];
 ---
 <Base title="Home">
   <section class="hero wrap">
@@ -42,9 +54,15 @@ const maxLost = Math.max(...lost.map((l) => l.minutes));
     </div>
 
     <div class="hero-media">
-      <!-- TODO: swap in a FinisherPix finish-line shot (portrait, ~1200px wide) via astro:assets <Image />. -->
-      <figure class="photo" aria-label="Finish line photo placeholder">
-        <span class="mono">[ FINISH PHOTO · FINISHERPIX ]</span>
+      <figure class="photo">
+        <Image
+          src={finishChute}
+          alt="James smiling as he runs down the finish chute at Ironman 70.3 Michigan, bib 2073"
+          widths={[480, 800, 1200]}
+          sizes="(width < 40rem) 100vw, 40vw"
+          loading="eager"
+          fetchpriority="high"
+        />
       </figure>
 
       <div class="splits mono" aria-label="Official splits, Ironman 70.3 Michigan 2026">
@@ -88,6 +106,19 @@ const maxLost = Math.max(...lost.map((l) => l.minutes));
         </li>
       ))}
     </ol>
+    <ul class="legs">
+      {legPhotos.map((p) => (
+        <li style={`--leg: ${p.color}`}>
+          <figure>
+            <Image src={p.src} alt={p.alt} widths={[360, 600, 900]} sizes="(width < 40rem) 100vw, 30vw" />
+            <figcaption>
+              <span class="mono leg-time"><span class="leg-name">{p.leg}</span> {p.time}</span>
+              <span class="muted">{p.caption}</span>
+            </figcaption>
+          </figure>
+        </li>
+      ))}
+    </ul>
     <p><a href="/prompts/performance-debrief/">The debrief prompt I used</a>, which works for a round of golf or a 10K just as well.</p>
   </section>
 
@@ -135,16 +166,18 @@ const maxLost = Math.max(...lost.map((l) => l.minutes));
       aspect-ratio: 4 / 5;
       inline-size: 85%;
       justify-self: end;
-      display: grid;
-      place-items: start end;
-      padding: var(--space-m);
+      margin: 0;
+      overflow: hidden;
       border-radius: var(--radius);
-      border: 1px dashed var(--line);
-      background:
-        repeating-linear-gradient(135deg, transparent 0 14px, rgb(255 255 255 / 0.03) 14px 28px),
-        var(--surface);
-      color: var(--ink-faint);
-      font-size: var(--step--1);
+      border: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .photo img {
+      inline-size: 100%;
+      block-size: 100%;
+      object-fit: cover;
+      /* Keep James, not the crowd, in a tall crop of a wide photo. */
+      object-position: 72% 30%;
     }
     .splits {
       grid-area: 1 / 1;
@@ -218,6 +251,43 @@ const maxLost = Math.max(...lost.map((l) => l.minutes));
     }
     .mins { grid-area: mins; font-weight: 600; }
     .note { grid-area: note; font-size: var(--step--1); }
+
+    .legs {
+      list-style: none;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+      gap: var(--space-s);
+    }
+    .legs figure { margin: 0; display: grid; gap: 0.6rem; }
+    .legs img {
+      inline-size: 100%;
+      block-size: auto;
+      aspect-ratio: 4 / 5;
+      object-fit: cover;
+      border-radius: var(--radius);
+      border-block-end: 3px solid var(--leg);
+      filter: saturate(0.85);
+      transition: filter 0.3s;
+    }
+    .legs li:hover img { filter: none; }
+    .legs figcaption { display: grid; gap: 0.2rem; font-size: var(--step--1); }
+    .leg-time { font-weight: 600; }
+    .leg-name { color: var(--leg); text-transform: uppercase; }
+
+    @media (width < 40rem) {
+      /* Leg photos become a swipeable strip instead of three tall stacked images. */
+        .legs {
+          grid-template-columns: none;
+          grid-auto-flow: column;
+          grid-auto-columns: 72%;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          overscroll-behavior-x: contain;
+          padding-block-end: 0.5rem;
+        }
+        .legs li { scroll-snap-align: start; }
+    }
 
     .section-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--space-s); }
     .grid {
