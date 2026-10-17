@@ -1,0 +1,45 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  prompt: CollectionEntry<'prompts'>;
+}
+const { prompt } = Astro.props;
+const { title, order, useWhen } = prompt.data;
+// A peek at the real prompt text, so the card shows what you're getting.
+const peek = (prompt.body ?? '').replace(/\s+/g, ' ').trim().slice(0, 90).replace(/\s\S*$/, '') + '…';
+const when = useWhen.split(/[,.]/)[0];
+---
+<article class="card" style={`view-transition-name: prompt-${prompt.id}`}>
+  <p class="num">{String(order).padStart(2, '0')} · {when}</p>
+  <h3><a href={`/prompts/${prompt.id}/`}>{title}</a></h3>
+  <p class="peek">{peek}</p>
+</article>
+
+<style>
+  @layer components {
+    .card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: var(--space-m);
+      display: grid;
+      gap: 0.75rem;
+      align-content: start;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    .card:has(a:hover, a:focus-visible) { border-color: var(--accent); transform: translateY(-2px); }
+    /* Whole card is clickable without nesting block content in the link. */
+    .card a { text-decoration: none; }
+    .card a::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+    .num {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .peek { font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.55; color: var(--ink-muted); }
+  }
+</style>

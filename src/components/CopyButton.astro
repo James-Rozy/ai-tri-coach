@@ -1,0 +1,41 @@
+---
+interface Props {
+  /** id of the element whose text gets copied */
+  target: string;
+}
+const { target } = Astro.props;
+---
+<button type="button" class="copy" data-copy-target={target}>
+  <span class="label-idle">Copy prompt</span>
+  <span class="label-done" aria-live="polite">Copied</span>
+</button>
+
+<script>
+  document.addEventListener('click', async (event) => {
+    const button = (event.target as Element).closest<HTMLButtonElement>('[data-copy-target]');
+    if (!button) return;
+    const source = document.getElementById(button.dataset.copyTarget!);
+    if (!source) return;
+    await navigator.clipboard.writeText(source.innerText.trim());
+    button.dataset.copied = '';
+    setTimeout(() => delete button.dataset.copied, 2000);
+  });
+</script>
+
+<style>
+  @layer components {
+    .copy {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 0.4em 1em;
+      font-size: var(--step--1);
+      cursor: pointer;
+    }
+    .copy:hover { border-color: var(--accent); }
+    .label-done { display: none; }
+    .copy[data-copied] .label-idle { display: none; }
+    .copy[data-copied] .label-done { display: inline; }
+  }
+</style>

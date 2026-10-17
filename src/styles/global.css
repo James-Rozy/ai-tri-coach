@@ -1,0 +1,106 @@
+/* Layer order: later layers win, so components and utilities never fight reset specificity. */
+@layer reset, tokens, base, layout, components, utilities;
+
+@layer reset {
+  *, *::before, *::after { box-sizing: border-box; }
+  * { margin: 0; }
+  html { -webkit-text-size-adjust: none; text-size-adjust: none; }
+  img, svg, video { display: block; max-inline-size: 100%; }
+  input, button, textarea, select { font: inherit; }
+}
+
+@layer tokens {
+  /* Design A, "Race Timing": dark ground, timing-mat numerals, one amber accent. */
+  :root {
+    color-scheme: dark;
+
+    /* Leg colors are for data only; the brand accent is amber. */
+    --swim: oklch(68% 0.13 235);
+    --bike: oklch(74% 0.15 55);
+    --run: oklch(72% 0.16 155);
+    --trans: oklch(66% 0.02 255);
+
+    --bg: #0E1116;
+    --surface: #151A21;
+    --surface-2: #1B212A;
+    --ink: #F2F4F7;
+    --ink-muted: #A9B2C0;
+    --ink-faint: #7D8796;
+    --line: #262C36;
+    --accent: #FFB020;
+    --on-accent: #0E1116;
+
+    --font-display: "Archivo", system-ui, sans-serif;
+    --font-sans: "Archivo", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+
+    --step--1: clamp(0.83rem, 0.8rem + 0.15vw, 0.94rem);
+    --step-0: clamp(1rem, 0.95rem + 0.25vw, 1.13rem);
+    --step-1: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+    --step-2: clamp(1.75rem, 1.4rem + 1.4vw, 2.6rem);
+    --step-3: clamp(2.6rem, 1.6rem + 4.4vw, 5.2rem);
+
+    --space-s: clamp(0.75rem, 0.7rem + 0.25vw, 1rem);
+    --space-m: clamp(1.25rem, 1.1rem + 0.75vw, 2rem);
+    --space-l: clamp(2rem, 1.6rem + 2vw, 4rem);
+    --space-xl: clamp(3rem, 2.2rem + 4vw, 7rem);
+
+    --radius: 10px;
+    --gutter: 16px;
+    --max: 76rem;
+  }
+}
+
+@layer base {
+  /* Native cross-document view transitions: page-to-page morphs with no client router. */
+  @view-transition { navigation: auto; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: var(--step-0);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { line-height: 1.1; text-wrap: balance; letter-spacing: -0.01em; font-family: var(--font-display); }
+  /* Condensed, uppercase display type: the "timing board" voice. */
+  h1, h2 { font-weight: 900; font-stretch: 75%; text-transform: uppercase; line-height: 0.95; }
+  h1 { font-size: var(--step-3); }
+  h2 { font-size: var(--step-2); }
+  h3 { font-weight: 700; }
+  h3 { font-size: var(--step-1); }
+  p { text-wrap: pretty; max-inline-size: 65ch; }
+  a { color: inherit; text-decoration-color: var(--accent); text-underline-offset: 0.2em; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    @view-transition { navigation: none; }
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+}
+
+@layer layout {
+  .wrap {
+    inline-size: min(100% - 2 * var(--gutter), var(--max));
+    margin-inline: auto;
+  }
+  .stack > * + * { margin-block-start: var(--stack-gap, var(--space-s)); }
+  .section { padding-block: var(--space-xl); }
+}
+
+@layer utilities {
+  .muted { color: var(--ink-muted); }
+  .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .label {
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .visually-hidden {
+    position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden;
+    clip-path: inset(50%); white-space: nowrap;
+  }
+}

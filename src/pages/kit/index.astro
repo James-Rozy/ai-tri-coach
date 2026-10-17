@@ -1,0 +1,74 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import CopyButton from '../../components/CopyButton.astro';
+import Examples from '../../components/Examples.astro';
+
+const prompts = (await getCollection('prompts', ({ data }) => data.tier === 'free')).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+const rendered = await Promise.all(prompts.map(async (p) => ({ prompt: p, ...(await render(p)) })));
+---
+<Base title="Free starter kit" description="Four prompts and a setup guide for using Claude as your endurance coach.">
+  <article class="wrap section stack kit">
+    <h1>Coach yourself with AI: the starter kit</h1>
+    <p class="muted">
+      This is the setup I use with Claude to coach my Ironman training, written so it works for any sport. It's not a
+      training plan. It's how to get an AI to build one from your own data, explain why, and tell you when you're off
+      track. You'll need a Claude account, whatever history you have (a training app, scorecards, or a notebook), and
+      a goal you can measure.
+    </p>
+
+    <h2>Setup</h2>
+    <ol class="steps">
+      <li>
+        <strong>Make a project for your training.</strong> In Claude, create a Project called "Training" and paste
+        Prompt 1 into its instructions. Everything you add later builds on it.
+      </li>
+      <li>
+        <strong>Give it your data.</strong> Connect your training app if your Claude plan offers a connector for it, or
+        export your last 3 to 6 months as a CSV and upload it to the project. No app? Scorecards, a spreadsheet, or a
+        typed-up log work too.
+      </li>
+      <li><strong>Run the prompts below in order</strong>, then use the weekly check-in every week.</li>
+    </ol>
+
+    {rendered.map(({ prompt, Content }) => (
+      <section class="prompt stack" id={prompt.id}>
+        <header class="prompt-head">
+          <h2>{prompt.data.order}. {prompt.data.title}</h2>
+          <CopyButton target={`text-${prompt.id}`} />
+        </header>
+        <p class="muted">Use it: {prompt.data.useWhen}</p>
+        <div class="prompt-text" id={`text-${prompt.id}`}><Content /></div>
+        <Examples examples={prompt.data.examples} />
+      </section>
+    ))}
+
+    <h2>What's next</h2>
+    <p>
+      I'm posting the real prompts and Claude's answers from every week of my build to an Ironman, the good weeks and
+      the bad ones. <a href="/#signup">Follow along.</a>
+    </p>
+  </article>
+</Base>
+
+<style>
+  @layer components {
+    .kit { --stack-gap: var(--space-m); max-inline-size: 48rem; }
+    .steps { display: grid; gap: var(--space-s); padding-inline-start: 1.25em; }
+    .prompt { --stack-gap: var(--space-s); padding-block-start: var(--space-m); }
+    .prompt-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-s); }
+    .prompt-text {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-inline-start: 4px solid var(--accent);
+      border-radius: var(--radius);
+      padding: var(--space-m);
+      font-family: var(--font-mono);
+      font-size: var(--step--1);
+    }
+    .prompt-text :global(ul) { padding-inline-start: 1.25em; }
+    .prompt-text :global(* + *) { margin-block-start: 0.6em; }
+  }
+</style>
