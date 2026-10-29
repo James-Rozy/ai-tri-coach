@@ -1,0 +1,9 @@
+<fonts>
+    <font id="TimeLarge" filename="time_large.fnt" antialias="true"/>
+    <font id="MonoLabel" filename="mono_label.fnt" antialias="true"/>
+    <font id="MonoSmall" filename="mono_small.fnt" antialias="true"/>
+    <font id="MonoLeg" filename="mono_leg.fnt" antialias="true"/>
+    <font id="MonoDate" filename="mono_date.fnt" antialias="true"/>
+    <font id="MonoValue" filename="mono_value.fnt" antialias="true"/>
+    <font id="MonoSecs" filename="mono_secs.fnt" antialias="true"/>
+</fonts>

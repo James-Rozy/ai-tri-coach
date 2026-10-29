@@ -1,0 +1,8 @@
+<strings>
+    <string id="AppName">Split Decisions</string>
+    <string id="SwimTitle">Swim split (minutes)</string>
+    <string id="T1Title">T1 split (minutes)</string>
+    <string id="BikeTitle">Bike split (minutes)</string>
+    <string id="T2Title">T2 split (minutes)</string>
+    <string id="RunTitle">Run split (minutes)</string>
+</strings>

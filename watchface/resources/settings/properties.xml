@@ -1,0 +1,8 @@
+<properties>
+    <!-- Race splits the day ring is divided by. Defaults add up to a 5:00 70.3. -->
+    <property id="SwimMin" type="number">32</property>
+    <property id="T1Min" type="number">4</property>
+    <property id="BikeMin" type="number">155</property>
+    <property id="T2Min" type="number">3</property>
+    <property id="RunMin" type="number">106</property>
+</properties>

@@ -1,0 +1,17 @@
+<settings>
+    <setting propertyKey="@Properties.SwimMin" title="@Strings.SwimTitle">
+        <settingConfig type="numeric" min="1" max="600"/>
+    </setting>
+    <setting propertyKey="@Properties.T1Min" title="@Strings.T1Title">
+        <settingConfig type="numeric" min="1" max="600"/>
+    </setting>
+    <setting propertyKey="@Properties.BikeMin" title="@Strings.BikeTitle">
+        <settingConfig type="numeric" min="1" max="600"/>
+    </setting>
+    <setting propertyKey="@Properties.T2Min" title="@Strings.T2Title">
+        <settingConfig type="numeric" min="1" max="600"/>
+    </setting>
+    <setting propertyKey="@Properties.RunMin" title="@Strings.RunTitle">
+        <settingConfig type="numeric" min="1" max="600"/>
+    </setting>
+</settings>
