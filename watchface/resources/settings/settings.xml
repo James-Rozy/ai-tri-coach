@@ -2,12 +2,6 @@
     <setting propertyKey="@Properties.TargetHours" title="@Strings.TargetTitle">
         <settingConfig type="numeric" min="1" max="40"/>
     </setting>
-    <setting propertyKey="@Properties.PlanName" title="@Strings.PlanNameTitle">
-        <settingConfig type="alphaNumeric" maxLength="8"/>
-    </setting>
-    <setting propertyKey="@Properties.PlanStart" title="@Strings.PlanStartTitle">
-        <settingConfig type="alphaNumeric" maxLength="10"/>
-    </setting>
     <setting propertyKey="@Properties.RaceDate" title="@Strings.RaceDateTitle">
         <settingConfig type="alphaNumeric" maxLength="10"/>
     </setting>

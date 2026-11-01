@@ -1,7 +1,5 @@
 <strings>
     <string id="AppName">Split Decisions</string>
     <string id="TargetTitle">Weekly training target (hours)</string>
-    <string id="PlanNameTitle">Plan block name</string>
-    <string id="PlanStartTitle">Plan start (YYYY-MM-DD)</string>
     <string id="RaceDateTitle">Race date (YYYY-MM-DD)</string>
 </strings>

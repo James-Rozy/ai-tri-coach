@@ -4,10 +4,10 @@ A Connect IQ watch face for the Garmin Fēnix 9 Pro 47mm (454×454 AMOLED), in t
 
 **Three edge gauges**, one per third of the dial, flush with the bezel:
 - **Left (8 to 11 o'clock):** Body Battery, filling upward, with its number at the gauge's midpoint.
-- **Right (1 to 4 o'clock):** race countdown, filling from the plan start date to race day, with days left at the gauge's midpoint.
+- **Right (1 to 4 o'clock):** heart rate, filling upward from your resting HR to your max in the current zone's color, with notches at the zone lines and BPM at the gauge's midpoint. Zones and max come from your Garmin HR zones.
 - **Bottom (5 to 7 o'clock):** this week's training hours by sport (swim, bike, run colors), filling left to right toward your weekly target.
 
-**Center, top to bottom:** HR with a zone-colored pip, steps and weather, a Monday-to-Sunday strip with sport dots, the segment clock dead center with amber seconds, the date, the plan week ("BASE WK 1"), swim/bike/run distance, and the week total.
+**Center, top to bottom:** steps and weather, a Monday-to-Sunday strip with sport dots, the segment clock dead center with amber seconds, the date, days to race day, swim/bike/run distance, and the week total.
 
 **Always-on:** time (in the same centered spot), date and thin gauges only, dimmed. Every other pixel row is blacked out (alternating each minute) and the layout drifts a few pixels each minute, to stay inside Garmin's AMOLED burn-in rules.
 
@@ -20,8 +20,6 @@ Garmin Connect app → the watch → Watch Faces → Split Decisions → Setting
 | Setting | Default |
 | --- | --- |
 | Weekly training target (hours) | 7 |
-| Plan block name | BASE |
-| Plan start (YYYY-MM-DD) | 2026-11-01 |
 | Race date (YYYY-MM-DD) | 2027-09-19 (placeholder; the 2027 date isn't confirmed) |
 
 ## Run it in the simulator

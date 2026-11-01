@@ -110,14 +110,14 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         drawWeekStrip(dc);
         drawClock(dc, clock, settings.is24Hour);
         drawCentered(dc, y(298), _bold, dateText(Gregorian.info(Time.now(), Time.FORMAT_SHORT)), COLOR_MUTED);
-        var plan = planText();
-        if (plan != null) {
-            drawCentered(dc, y(324), _bold, plan, COLOR_INK);
+        var daysLeft = daysUntil(Application.Properties.getValue("RaceDate"), Gregorian.info(Time.now(), Time.FORMAT_SHORT));
+        if (daysLeft != null && daysLeft >= 0) {
+            drawCentered(dc, y(324), _bold, daysLeft == 0 ? "RACE DAY" : daysLeft.toString() + (daysLeft == 1 ? " DAY" : " DAYS") + " TO RACE DAY", COLOR_INK);
         }
         drawWeekSplits(dc);
     }
 
-    // Three gauges flush with the bezel (Body Battery, race countdown, week hours), one per third of the dial, with 30 degree gaps at 12, 4 and 8 o'clock.
+    // Three gauges flush with the bezel (Body Battery, heart rate, week hours), one per third of the dial, with 30 degree gaps at 12, 4 and 8 o'clock.
     private function drawGauges(dc as Graphics.Dc, aod as Boolean) as Void {
         var width = aod ? 3 : 6;
         if (!aod) {
@@ -132,10 +132,23 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             drawClockArc(dc, 255.0, 255.0 + 90.0 * bb / 100.0, COLOR_INK, width);
         }
 
-        // Right, 1 to 4 o'clock: plan start to race day, filling upward as the race gets closer.
-        var progress = raceProgress();
-        if (progress != null) {
-            drawClockArc(dc, 105.0, 105.0 - 90.0 * progress, COLOR_INK, width);
+        // Right, 1 to 4 o'clock: heart rate from resting to max, filling upward in the current zone's color,
+        // with notches cut at the zone lines.
+        var hr = heartRate();
+        if (hr != null) {
+            var angle = hrAngle(hr);
+            if (angle != null) {
+                drawClockArc(dc, 105.0, angle as Float, zoneColor(hr), width);
+            }
+        }
+        var zones = _hrZones;
+        if (!aod && zones != null && zones.size() >= 6) {
+            for (var z = 1; z < 5; z++) {
+                var notch = hrAngle(zones[z]);
+                if (notch != null) {
+                    drawClockArc(dc, (notch as Float) + 0.6, (notch as Float) - 0.6, COLOR_BG, width + 2);
+                }
+            }
         }
 
         // Bottom, 5 to 7 o'clock: this week's hours by sport, filling left to right toward the target.
@@ -170,25 +183,15 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         ]);
     }
 
-    // HR with a zone pip, steps, weather.
+    // Steps and weather.
     private function drawTopRow(dc as Graphics.Dc) as Void {
-        var hr = heartRate();
         var steps = ActivityMonitor.getInfo().steps;
-        var labels = ["HR", "STEPS", "WEATHER"];
-        var values = [
-            hr == null ? "--" : hr.toString(),
-            steps == null ? "--" : thousands(steps),
-            temperature()
-        ];
-        for (var i = 0; i < 3; i++) {
-            var colX = _cx + (((i - 1) * 100) * _s).toNumber();
+        var labels = ["STEPS", "WEATHER"];
+        var values = [steps == null ? "--" : thousands(steps), temperature()];
+        for (var i = 0; i < 2; i++) {
+            var colX = _cx + (((i - 0.5) * 110) * _s).toNumber();
             drawBaseline(dc, colX, y(80), _label, labels[i], COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
             drawBaseline(dc, colX, y(108), _numData, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
-        }
-        if (hr != null) {
-            var vw = dc.getTextWidthInPixels(values[0], _numData);
-            dc.setColor(zoneColor(hr), Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(_cx - (100 * _s).toNumber() - vw / 2 - 10, y(99), 4);
         }
     }
 
@@ -243,9 +246,9 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         var bb = bodyBattery();
         drawBaseline(dc, x(71), y(140), _numData, bb == null ? "--" : bb.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
         drawBaseline(dc, x(71), y(156), _label, "BB", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
-        var daysLeft = daysUntil(Application.Properties.getValue("RaceDate"), Gregorian.info(Time.now(), Time.FORMAT_SHORT));
-        drawBaseline(dc, x(383), y(140), _numData, daysLeft == null ? "--" : daysLeft.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
-        drawBaseline(dc, x(383), y(156), _label, "DAYS", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
+        var hr = heartRate();
+        drawBaseline(dc, x(383), y(140), _numData, hr == null ? "--" : hr.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, x(383), y(156), _label, "BPM", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
     }
 
     // Wrist down: dimmed time and date with the gauges, then every other row blacked out
@@ -305,20 +308,26 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         return null;
     }
 
-    // How far from plan start to race day, 0.0 to 1.0, or null if either date doesn't parse.
-    private function raceProgress() as Float? {
-        var today = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
-        var sinceStart = daysUntil(Application.Properties.getValue("PlanStart"), today);
-        var daysLeft = daysUntil(Application.Properties.getValue("RaceDate"), today);
-        if (sinceStart == null || daysLeft == null) {
+    // Where a heart rate sits on the right gauge, in clock degrees: resting HR at 105 (4 o'clock),
+    // max HR at 15 (1 o'clock). Resting comes from the watch's profile, falling back to the zone 1 floor;
+    // max is the top of the user's zones. Null when the watch has no zones.
+    private function hrAngle(bpm as Number) as Float? {
+        var zones = _hrZones;
+        if (zones == null || zones.size() < 6) {
             return null;
         }
-        var span = daysLeft - sinceStart;
+        var floor = zones[0];
+        var profile = UserProfile.getProfile();
+        if (profile != null && profile.restingHeartRate != null && profile.restingHeartRate < zones[5]) {
+            floor = profile.restingHeartRate as Number;
+        }
+        var span = zones[5] - floor;
         if (span <= 0) {
             return null;
         }
-        var done = 1.0 - daysLeft.toFloat() / span;
-        return done < 0.0 ? 0.0 : (done > 1.0 ? 1.0 : done);
+        var f = (bpm - floor).toFloat() / span;
+        f = f < 0.0 ? 0.0 : (f > 1.0 ? 1.0 : f);
+        return 105.0 - 90.0 * f;
     }
 
     private function temperature() as String {
@@ -338,20 +347,6 @@ class SplitDecisionsView extends WatchUi.WatchFace {
     private function targetMinutes() as Number {
         var hours = Application.Properties.getValue("TargetHours");
         return ((hours instanceof Number && hours > 0) ? hours : 7) * 60;
-    }
-
-    // "BASE WK 1", or "BASE IN 2D" before the block starts.
-    private function planText() as String? {
-        var name = Application.Properties.getValue("PlanName");
-        var today = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
-        var until = daysUntil(Application.Properties.getValue("PlanStart"), today);
-        if (!(name instanceof String) || until == null) {
-            return null;
-        }
-        if (until > 0) {
-            return name.toUpper() + " IN " + until.toString() + "D";
-        }
-        return name.toUpper() + " WK " + (-until / 7 + 1).toString();
     }
 
     // Days from today to a "YYYY-MM-DD" setting, or null if it doesn't parse.
