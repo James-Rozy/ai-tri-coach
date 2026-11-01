@@ -239,12 +239,13 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         drawTop(dc, left + tw + 10, top + 46, _segSecs, "88", COLOR_GHOST);
         drawTop(dc, left + tw + 10, top + 46, _segSecs, secStr, COLOR_ACCENT);
 
+        // Gauge readouts sit inside each side gauge at its midpoint (10 and 2 o'clock, radius 180).
         var bb = bodyBattery();
-        drawBaseline(dc, x(46), top + 40, _numData, bb == null ? "--" : bb.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
-        drawBaseline(dc, x(46), top + 58, _label, "BB", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, x(71), y(140), _numData, bb == null ? "--" : bb.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, x(71), y(156), _label, "BB", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
         var daysLeft = daysUntil(Application.Properties.getValue("RaceDate"), Gregorian.info(Time.now(), Time.FORMAT_SHORT));
-        drawBaseline(dc, x(410), top + 40, _numData, daysLeft == null ? "--" : daysLeft.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
-        drawBaseline(dc, x(410), top + 58, _label, "DAYS", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, x(383), y(140), _numData, daysLeft == null ? "--" : daysLeft.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, x(383), y(156), _label, "DAYS", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
     }
 
     // Wrist down: dimmed time and date with the gauges, then every other row blacked out
