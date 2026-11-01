@@ -20,7 +20,6 @@ const COLOR_INK = 0xF2F4F7;
 const COLOR_MUTED = 0xA9B2C0;
 const COLOR_FAINT = 0x7D8796;
 const COLOR_ACCENT = 0xFFB020;
-const COLOR_ALERT = 0xE5484D;
 
 // Swim, bike, run. These colors only ever mean the sport.
 const SPORT_COLORS = [0x2EA4DC, 0xF28E42, 0x35C177];
@@ -109,72 +108,59 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             return;
         }
 
-        drawWeekHeader(dc);
-        drawTopRow(dc);
-        drawWeekStrip(dc);
-        drawClock(dc, clock, settings.is24Hour);
-
+        // 12 o'clock, in the gap between the two upper gauges: days to race day.
         var today = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
-        drawCentered(dc, y(330), _bold, dateText(today), COLOR_MUTED);
-
         var race = Application.Properties.getValue("RaceName");
         var raceDays = daysUntil(Application.Properties.getValue("RaceDate"), today);
         if (race instanceof String && raceDays != null) {
-            drawRuns(dc, y(368), [
+            drawRuns(dc, y(70), [
                 [race.toUpper(), _label, COLOR_FAINT, 10],
                 [raceDays.toString(), _numMedium, COLOR_INK, 4],
                 ["DAYS", _label, COLOR_FAINT, 0]
             ]);
         }
 
-        var battery = System.getSystemStats().battery.toNumber();
-        drawCentered(dc, y(414), _bold, battery.toString() + "%", battery < 20 ? COLOR_ALERT : COLOR_MUTED);
+        drawTopRow(dc);
+        drawWeekStrip(dc);
+        drawClock(dc, clock, settings.is24Hour);
+        drawCentered(dc, y(330), _bold, dateText(today), COLOR_MUTED);
+        drawWeekSplits(dc);
     }
 
-    // Four gauges flush with the bezel: week (top), recovery (right), battery (bottom), Body Battery (left).
+    // Three gauges flush with the bezel, one per third of the dial, with 30 degree gaps at 12, 4 and 8 o'clock.
     private function drawGauges(dc as Graphics.Dc, aod as Boolean) as Void {
         var width = aod ? 3 : 6;
         if (!aod) {
-            drawClockArc(dc, 333.0, 387.0, COLOR_TRACK, width);
-            drawClockArc(dc, 125.0, 55.0, COLOR_TRACK, width);
-            drawClockArc(dc, 207.0, 153.0, COLOR_TRACK, width);
-            drawClockArc(dc, 235.0, 305.0, COLOR_TRACK, width);
+            drawClockArc(dc, 255.0, 345.0, COLOR_TRACK, width);
+            drawClockArc(dc, 105.0, 15.0, COLOR_TRACK, width);
+            drawClockArc(dc, 225.0, 135.0, COLOR_TRACK, width);
         }
 
-        // Top: this week's hours by sport, filling clockwise toward the target.
+        // Left, 8 to 11 o'clock: Body Battery, filling upward.
+        var bb = bodyBattery();
+        if (bb != null) {
+            drawClockArc(dc, 255.0, 255.0 + 90.0 * bb / 100.0, COLOR_INK, width);
+        }
+
+        // Right, 1 to 4 o'clock: recovery hours left, emptying as you recover.
+        var recovery = recoveryHours();
+        if (recovery != null) {
+            drawClockArc(dc, 105.0, 105.0 - 90.0 * min(recovery, RECOVERY_MAX_HOURS) / RECOVERY_MAX_HOURS, COLOR_INK, width);
+        }
+
+        // Bottom, 5 to 7 o'clock: this week's hours by sport, filling left to right toward the target.
         var target = targetMinutes();
         var done = 0;
         for (var i = 0; i < 3; i++) {
-            var from = 333.0 + 54.0 * min(done, target) / target;
+            var from = 225.0 - 90.0 * min(done, target) / target;
             done += _week.seconds[i] / 60;
-            var to = 333.0 + 54.0 * min(done, target) / target;
-            drawClockArc(dc, from, to - 0.8, SPORT_COLORS[i], width);
-        }
-
-        // Right: recovery hours left, emptying as you recover.
-        var recovery = recoveryHours();
-        if (recovery != null) {
-            drawClockArc(dc, 125.0, 125.0 - 70.0 * min(recovery, RECOVERY_MAX_HOURS) / RECOVERY_MAX_HOURS, COLOR_INK, width);
-        }
-
-        // Bottom: watch battery, filling left to right, red when low.
-        var battery = System.getSystemStats().battery;
-        drawClockArc(dc, 207.0, 207.0 - 54.0 * battery / 100.0, battery < 20 ? COLOR_ALERT : COLOR_MUTED, width);
-
-        // Left: Body Battery, filling upward.
-        var bb = bodyBattery();
-        if (bb != null) {
-            drawClockArc(dc, 235.0, 235.0 + 70.0 * bb / 100.0, COLOR_INK, width);
+            var to = 225.0 - 90.0 * min(done, target) / target;
+            drawClockArc(dc, from, to + 0.8, SPORT_COLORS[i], width);
         }
     }
 
-    // Week total and each sport's distance, under the top gauge.
-    private function drawWeekHeader(dc as Graphics.Dc) as Void {
-        drawRuns(dc, y(52), [
-            [formatMinutes(_week.totalMinutes()), _numMedium, COLOR_INK, 2],
-            ["/" + (targetMinutes() / 60).toString() + "H", _label, COLOR_FAINT, 0]
-        ]);
-
+    // Each sport's distance, then the week total, just above the bottom gauge.
+    private function drawWeekSplits(dc as Graphics.Dc) as Void {
         var statute = System.getDeviceSettings().distanceUnits == System.UNIT_STATUTE;
         for (var i = 0; i < 3; i++) {
             var value = distanceValue(i, statute);
@@ -184,10 +170,14 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             var colX = _cx + (((i - 1) * 86) * _s).toNumber();
             var x0 = colX - (vw + 3 + uw - 12) / 2;
             dc.setColor(SPORT_COLORS[i], Graphics.COLOR_TRANSPARENT);
-            dc.fillRectangle(x0 - 12, y(72), 6, 6);
-            drawBaseline(dc, x0, y(84), _numSmall, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
-            drawBaseline(dc, x0 + vw + 3, y(84), _label, unit, COLOR_FAINT, Graphics.TEXT_JUSTIFY_LEFT);
+            dc.fillRectangle(x0 - 12, y(356), 6, 6);
+            drawBaseline(dc, x0, y(368), _numSmall, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
+            drawBaseline(dc, x0 + vw + 3, y(368), _label, unit, COLOR_FAINT, Graphics.TEXT_JUSTIFY_LEFT);
         }
+        drawRuns(dc, y(402), [
+            [formatMinutes(_week.totalMinutes()), _numMedium, COLOR_INK, 2],
+            ["/" + (targetMinutes() / 60).toString() + "H", _label, COLOR_FAINT, 0]
+        ]);
     }
 
     // HR with a zone pip, steps, weather.

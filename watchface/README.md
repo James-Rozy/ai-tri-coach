@@ -2,13 +2,12 @@
 
 A Connect IQ watch face for the Garmin Fēnix 9 Pro 47mm (454×454 AMOLED), in the site's Race Timing look. The approved design is the [mockup](https://claude.ai/artifact/HjvifodYnxCwp42sEF1FZk); the code follows its pixel positions.
 
-**Edge gauges**, flush with the bezel:
-- **Top:** this week's training hours by sport (swim, bike, run colors), filling toward your weekly target.
-- **Right:** recovery time, full at Garmin's 96-hour max and emptying as you recover.
-- **Bottom:** watch battery, red under 20%.
-- **Left:** Body Battery.
+**Three edge gauges**, one per third of the dial, flush with the bezel:
+- **Left (8 to 11 o'clock):** Body Battery, filling upward.
+- **Right (1 to 4 o'clock):** recovery time, full at Garmin's 96-hour max and emptying as you recover.
+- **Bottom (5 to 7 o'clock):** this week's training hours by sport (swim, bike, run colors), filling left to right toward your weekly target.
 
-**Center, top to bottom:** week total and swim/bike/run distance, then HR (with a zone-colored pip), steps and weather, the plan week ("BASE WK 1"), a Monday-to-Sunday strip with sport dots, the segment clock with amber seconds (Body Battery and recovery hours on either side), the date, days to race day, and battery percentage.
+**Center, top to bottom:** days to race day (in the gap at 12), HR with a zone-colored pip, steps and weather, the plan week ("BASE WK 1"), a Monday-to-Sunday strip with sport dots, the segment clock with amber seconds (Body Battery and recovery hours on either side), the date, swim/bike/run distance, and the week total.
 
 **Always-on:** time, date and thin gauges only, dimmed. Every other pixel row is blacked out (alternating each minute) and the layout drifts a few pixels each minute, to stay inside Garmin's AMOLED burn-in rules.
 
