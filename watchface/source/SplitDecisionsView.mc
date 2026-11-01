@@ -111,6 +111,10 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         drawWeekStrip(dc);
         drawClock(dc, clock, settings.is24Hour);
         drawCentered(dc, y(298), _bold, dateText(Gregorian.info(Time.now(), Time.FORMAT_SHORT)), COLOR_MUTED);
+        var plan = planText();
+        if (plan != null) {
+            drawCentered(dc, y(324), _bold, plan, COLOR_INK);
+        }
         drawWeekSplits(dc);
     }
 
@@ -157,11 +161,11 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             var colX = _cx + (((i - 1) * 86) * _s).toNumber();
             var x0 = colX - (vw + 3 + uw - 12) / 2;
             dc.setColor(SPORT_COLORS[i], Graphics.COLOR_TRANSPARENT);
-            dc.fillRectangle(x0 - 12, y(330), 6, 6);
-            drawBaseline(dc, x0, y(342), _numSmall, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
-            drawBaseline(dc, x0 + vw + 3, y(342), _label, unit, COLOR_FAINT, Graphics.TEXT_JUSTIFY_LEFT);
+            dc.fillRectangle(x0 - 12, y(346), 6, 6);
+            drawBaseline(dc, x0, y(358), _numSmall, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
+            drawBaseline(dc, x0 + vw + 3, y(358), _label, unit, COLOR_FAINT, Graphics.TEXT_JUSTIFY_LEFT);
         }
-        drawRuns(dc, y(380), [
+        drawRuns(dc, y(390), [
             [formatMinutes(_week.totalMinutes()), _numMedium, COLOR_INK, 2],
             ["/" + (targetMinutes() / 60).toString() + "H", _label, COLOR_FAINT, 0]
         ]);
@@ -189,20 +193,16 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         }
     }
 
-    // Plan week, then Monday to Sunday with sport dots. Today is amber.
+    // Monday to Sunday with sport dots. Today is amber.
     private function drawWeekStrip(dc as Graphics.Dc) as Void {
-        var plan = planText();
-        if (plan != null) {
-            drawCentered(dc, y(138), _bold, plan, COLOR_INK);
-        }
         var todayIdx = TrainingWeek.todayIndex();
         for (var i = 0; i < 7; i++) {
             var lx = _cx + (((i - 3) * 26) * _s).toNumber();
             var color = i == todayIdx ? COLOR_ACCENT : (i > todayIdx ? COLOR_FAINT : COLOR_MUTED);
-            drawBaseline(dc, lx, y(160), _bold, WEEK_LETTERS[i], color, Graphics.TEXT_JUSTIFY_CENTER);
+            drawBaseline(dc, lx, y(150), _bold, WEEK_LETTERS[i], color, Graphics.TEXT_JUSTIFY_CENTER);
             if (i == todayIdx) {
                 dc.setColor(COLOR_ACCENT, Graphics.COLOR_TRANSPARENT);
-                dc.fillRectangle(lx - 7, y(165), 14, 2);
+                dc.fillRectangle(lx - 7, y(155), 14, 2);
             }
             var mask = _week.dayMask[i];
             var count = 0;
@@ -215,7 +215,7 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             for (var s = 0; s < 3; s++) {
                 if ((mask & (1 << s)) != 0) {
                     dc.setColor(SPORT_COLORS[s], Graphics.COLOR_TRANSPARENT);
-                    dc.fillRectangle(dx, y(171), 5, 5);
+                    dc.fillRectangle(dx, y(161), 5, 5);
                     dx += 7;
                 }
             }

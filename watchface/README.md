@@ -7,7 +7,7 @@ A Connect IQ watch face for the Garmin Fēnix 9 Pro 47mm (454×454 AMOLED), in t
 - **Right (1 to 4 o'clock):** race countdown, filling from the plan start date to race day.
 - **Bottom (5 to 7 o'clock):** this week's training hours by sport (swim, bike, run colors), filling left to right toward your weekly target.
 
-**Center, top to bottom:** HR with a zone-colored pip, steps and weather, the plan week ("BASE WK 1"), a Monday-to-Sunday strip with sport dots, the segment clock dead center with amber seconds (Body Battery on the left, days to race day on the right), the date, swim/bike/run distance, and the week total.
+**Center, top to bottom:** HR with a zone-colored pip, steps and weather, a Monday-to-Sunday strip with sport dots, the segment clock dead center with amber seconds (Body Battery on the left, days to race day on the right), the date, the plan week ("BASE WK 1"), swim/bike/run distance, and the week total.
 
 **Always-on:** time (in the same centered spot), date and thin gauges only, dimmed. Every other pixel row is blacked out (alternating each minute) and the layout drifts a few pixels each minute, to stay inside Garmin's AMOLED burn-in rules.
 
