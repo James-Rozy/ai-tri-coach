@@ -51,6 +51,9 @@ class SplitDecisionsView extends WatchUi.WatchFace {
     private var _numDetail as WatchUi.FontResource;
     private var _label as WatchUi.FontResource;
     private var _bold as WatchUi.FontResource;
+    // Swim, bike, run icons: large for the distance row, small for the week strip.
+    private var _iconsLarge as Array<WatchUi.BitmapResource>;
+    private var _iconsSmall as Array<WatchUi.BitmapResource>;
 
     // Set at the top of each onUpdate.
     private var _cx as Number = 227;
@@ -65,6 +68,16 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         _numDetail = WatchUi.loadResource(Rez.Fonts.NumDetail) as WatchUi.FontResource;
         _label = WatchUi.loadResource(Rez.Fonts.MonoLabel) as WatchUi.FontResource;
         _bold = WatchUi.loadResource(Rez.Fonts.MonoBold) as WatchUi.FontResource;
+        _iconsLarge = [
+            WatchUi.loadResource(Rez.Drawables.SwimLarge) as WatchUi.BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.BikeLarge) as WatchUi.BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.RunLarge) as WatchUi.BitmapResource
+        ] as Array<WatchUi.BitmapResource>;
+        _iconsSmall = [
+            WatchUi.loadResource(Rez.Drawables.SwimSmall) as WatchUi.BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.BikeSmall) as WatchUi.BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.RunSmall) as WatchUi.BitmapResource
+        ] as Array<WatchUi.BitmapResource>;
         if (UserProfile has :getHeartRateZones) {
             _hrZones = UserProfile.getHeartRateZones(UserProfile.HR_ZONE_SPORT_GENERIC);
         }
@@ -170,10 +183,9 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             var unit = distanceUnit(i, statute);
             var vw = dc.getTextWidthInPixels(value, _numDetail);
             var uw = dc.getTextWidthInPixels(unit, _label);
-            var colX = _cx + (((i - 1) * 86) * _s).toNumber();
-            var x0 = colX - (vw + 3 + uw - 12) / 2;
-            dc.setColor(SPORT_COLORS[i], Graphics.COLOR_TRANSPARENT);
-            dc.fillRectangle(x0 - 12, y(358), 6, 6);
+            var colX = _cx + (((i - 1) * 96) * _s).toNumber();
+            var x0 = colX - (vw + 3 + uw - 19) / 2;
+            dc.drawBitmap(x0 - 19, y(356), _iconsLarge[i]);
             drawBaseline(dc, x0, y(370), _numDetail, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
             drawBaseline(dc, x0 + vw + 3, y(370), _label, unit, COLOR_FAINT, Graphics.TEXT_JUSTIFY_LEFT);
         }
@@ -195,11 +207,11 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         }
     }
 
-    // Monday to Sunday with sport dots. Today is amber.
+    // Monday to Sunday with an icon per sport done that day. Today is amber.
     private function drawWeekStrip(dc as Graphics.Dc) as Void {
         var todayIdx = TrainingWeek.todayIndex();
         for (var i = 0; i < 7; i++) {
-            var lx = _cx + (((i - 3) * 26) * _s).toNumber();
+            var lx = _cx + (((i - 3) * 30) * _s).toNumber();
             var color = i == todayIdx ? COLOR_ACCENT : (i > todayIdx ? COLOR_FAINT : COLOR_MUTED);
             drawBaseline(dc, lx, y(150), _bold, WEEK_LETTERS[i], color, Graphics.TEXT_JUSTIFY_CENTER);
             if (i == todayIdx) {
@@ -213,12 +225,11 @@ class SplitDecisionsView extends WatchUi.WatchFace {
                     count++;
                 }
             }
-            var dx = lx - count * 7 / 2 + 1;
+            var dx = lx - count * 13 / 2 + 1;
             for (var s = 0; s < 3; s++) {
                 if ((mask & (1 << s)) != 0) {
-                    dc.setColor(SPORT_COLORS[s], Graphics.COLOR_TRANSPARENT);
-                    dc.fillRectangle(dx, y(161), 5, 5);
-                    dx += 7;
+                    dc.drawBitmap(dx, y(160), _iconsSmall[s]);
+                    dx += 13;
                 }
             }
         }

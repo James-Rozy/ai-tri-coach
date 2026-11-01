@@ -1,4 +1,4 @@
-"""Generate the watch face's bitmap fonts and launcher icon.
+"""Generate the watch face's bitmap fonts, sport icons and launcher icon.
 
 Connect IQ can't use TTF fonts directly, so this renders the brand faces
 (Archivo Condensed Black and JetBrains Mono) into BMFont text files plus PNG
@@ -9,6 +9,7 @@ geometry as the design mockup. Digits share one advance so numbers don't jiggle.
     python3 watchface/tools/make_assets.py
 """
 
+import json
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -162,6 +163,45 @@ def build_segment_font(name, w, h, t):
     write_font(name, "Split Decisions Segments", h, h, h, glyphs)
 
 
+# Sport icons: geometry on a 16-unit grid in sport_icons.json (shared with the mockup),
+# drawn in each sport's color at two sizes: the distance row and the week strip.
+SPORT_ICONS = Path(__file__).resolve().parent / "sport_icons.json"
+SPORT_COLORS = {"swim": (0x2E, 0xA4, 0xDC), "bike": (0xF2, 0x8E, 0x42), "run": (0x35, 0xC1, 0x77)}
+ICON_SIZES = {"Large": 15, "Small": 11}
+ICON_SS = 8
+
+
+def build_sport_icons():
+    icons = json.loads(SPORT_ICONS.read_text())
+    for key, elements in icons.items():
+        for suffix, size in ICON_SIZES.items():
+            k = size * ICON_SS / 16
+            mask = Image.new("L", (size * ICON_SS, size * ICON_SS), 0)
+            draw = ImageDraw.Draw(mask)
+            for e in elements:
+                ink = 0 if e.get("bg") else 255
+                if e["t"] in ("line", "fill"):
+                    pts = [(x * k, y * k) for x, y in e["p"]]
+                    if e["t"] == "fill":
+                        draw.polygon(pts, fill=ink)
+                    else:
+                        w = e["w"] * k
+                        draw.line(pts, fill=ink, width=round(w), joint="curve")
+                        for x, y in (pts[0], pts[-1]):  # round caps
+                            draw.ellipse((x - w / 2, y - w / 2, x + w / 2, y + w / 2), fill=ink)
+                else:
+                    cx, cy, r = e["c"][0] * k, e["c"][1] * k, e["r"] * k
+                    if e["t"] == "dot":
+                        draw.ellipse((cx - r, cy - r, cx + r, cy + r), fill=ink)
+                    else:
+                        w = e["w"] * k
+                        draw.ellipse((cx - r - w / 2, cy - r - w / 2, cx + r + w / 2, cy + r + w / 2), outline=ink, width=round(w))
+            alpha = mask.resize((size, size), Image.LANCZOS)
+            img = Image.new("RGBA", (size, size), SPORT_COLORS[key] + (0,))
+            img.putalpha(alpha)
+            img.save(DRAW_OUT / f"icon_{key}_{suffix.lower()}.png")
+
+
 def build_launcher_icon():
     """'SD' monogram over a split amber bar, for the watch's face picker."""
     size = 80
@@ -184,5 +224,6 @@ if __name__ == "__main__":
         build_text_font(*spec)
     for spec in SEGMENT_FONTS:
         build_segment_font(*spec)
+    build_sport_icons()
     build_launcher_icon()
-    print("Wrote fonts to", FONT_OUT, "and the launcher icon to", DRAW_OUT)
+    print("Wrote fonts to", FONT_OUT, "and the icons to", DRAW_OUT)
