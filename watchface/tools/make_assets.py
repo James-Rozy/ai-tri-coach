@@ -1,8 +1,9 @@
-"""Generate the watch face's bitmap fonts, wordmark and launcher icon.
+"""Generate the watch face's bitmap fonts and launcher icon.
 
 Connect IQ can't use TTF fonts directly, so this renders the brand faces
 (Archivo Condensed Black and JetBrains Mono) into BMFont text files plus PNG
-glyph sheets. Digits share one advance so the time doesn't jiggle.
+glyph sheets. The clock digits are drawn as seven-segment glyphs from the same
+geometry as the design mockup. Digits share one advance so numbers don't jiggle.
 
     python3 -m pip install pillow
     python3 watchface/tools/make_assets.py
@@ -26,25 +27,69 @@ INK = (0xF2, 0xF4, 0xF7)
 BG = (0x0E, 0x11, 0x16)
 
 DIGITS = "0123456789"
-TEXT_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 :,%-"
+NUMBER_CHARS = DIGITS + ",.:%°H/-"
+TEXT_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 :,.%/-°"
 
 # id, source face, pixel size, characters
-FONTS = [
-    ("time_large", ARCHIVO_BLACK, 142, DIGITS + ":"),
-    ("mono_label", MONO_REGULAR, 13, TEXT_CHARS),
-    ("mono_small", MONO_REGULAR, 15, TEXT_CHARS),
-    ("mono_leg", MONO_SEMIBOLD, 18, TEXT_CHARS),
-    ("mono_date", MONO_SEMIBOLD, 21, TEXT_CHARS),
-    ("mono_value", MONO_SEMIBOLD, 24, TEXT_CHARS),
-    ("mono_secs", MONO_SEMIBOLD, 26, DIGITS),
+TEXT_FONTS = [
+    ("num_large", ARCHIVO_BLACK, 30, NUMBER_CHARS),
+    ("num_medium", ARCHIVO_BLACK, 24, NUMBER_CHARS),
+    ("num_small", ARCHIVO_BLACK, 20, NUMBER_CHARS),
+    ("mono_label", MONO_REGULAR, 14, TEXT_CHARS),
+    ("mono_bold", MONO_SEMIBOLD, 14, TEXT_CHARS),
 ]
 
+# id, digit width, digit height, segment thickness (matches the mockup's segText calls)
+SEGMENT_FONTS = [
+    ("seg_time", 44, 76, 10),
+    ("seg_secs", 14, 30, 4),
+]
 
-def build_font(name, path, size, chars):
+SHEET_W = 512
+PAD = 2
+
+
+def pack(glyphs):
+    """Shelf-pack glyph images into one sheet; sets x and y on each glyph."""
+    x = y = shelf = 0
+    for g in glyphs:
+        if x + g["w"] + PAD > SHEET_W:
+            x, y, shelf = 0, y + shelf + PAD, 0
+        g["x"], g["y"] = x, y
+        x += g["w"] + PAD
+        shelf = max(shelf, g["h"])
+    sheet_h = y + shelf + PAD
+    alpha = Image.new("L", (SHEET_W, sheet_h), 0)
+    for g in glyphs:
+        if g["w"] and g["h"]:
+            alpha.paste(g["img"], (g["x"], g["y"]))
+    sheet = Image.new("RGBA", (SHEET_W, sheet_h), (255, 255, 255, 0))
+    sheet.putalpha(alpha)
+    return sheet
+
+
+def write_font(name, face, size, line_height, base, glyphs):
+    sheet = pack(glyphs)
+    sheet.save(FONT_OUT / f"{name}.png")
+    lines = [
+        f'info face="{face}" size={size} bold=0 italic=0 charset="" unicode=1 '
+        f"stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing={PAD},{PAD}",
+        f"common lineHeight={line_height} base={base} scaleW={SHEET_W} scaleH={sheet.height} pages=1 packed=0",
+        f'page id=0 file="{name}.png"',
+        f"chars count={len(glyphs)}",
+    ]
+    for g in glyphs:
+        lines.append(
+            f"char id={ord(g['ch'])} x={g['x']} y={g['y']} width={g['w']} height={g['h']} "
+            f"xoffset={g['xoffset']} yoffset={g['yoffset']} xadvance={g['xadvance']} page=0 chnl=15"
+        )
+    (FONT_OUT / f"{name}.fnt").write_text("\n".join(lines) + "\n")
+
+
+def build_text_font(name, path, size, chars):
     font = ImageFont.truetype(str(path), size)
     ascent, descent = font.getmetrics()
     digit_advance = max(font.getlength(d) for d in DIGITS)
-
     glyphs = []
     for ch in chars:
         left, top, right, bottom = font.getbbox(ch)
@@ -59,55 +104,63 @@ def build_font(name, path, size, chars):
         if w and h:
             ImageDraw.Draw(img).text((-left, -top), ch, font=font, fill=255)
         glyphs.append(dict(ch=ch, img=img, w=w, h=h, xoffset=round(xoffset), yoffset=top, xadvance=round(advance)))
-
-    # Simple shelf packing.
-    sheet_w, pad = 512, 2
-    x = y = shelf = 0
-    for g in glyphs:
-        if x + g["w"] + pad > sheet_w:
-            x, y, shelf = 0, y + shelf + pad, 0
-        g["x"], g["y"] = x, y
-        x += g["w"] + pad
-        shelf = max(shelf, g["h"])
-    sheet_h = y + shelf + pad
-
-    alpha = Image.new("L", (sheet_w, sheet_h), 0)
-    for g in glyphs:
-        if g["w"] and g["h"]:
-            alpha.paste(g["img"], (g["x"], g["y"]))
-    sheet = Image.new("RGBA", (sheet_w, sheet_h), (255, 255, 255, 0))
-    sheet.putalpha(alpha)
-    sheet.save(FONT_OUT / f"{name}.png")
-
-    lines = [
-        f'info face="{font.getname()[0]}" size={size} bold=0 italic=0 charset="" unicode=1 '
-        f"stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing={pad},{pad}",
-        f"common lineHeight={ascent + descent} base={ascent} scaleW={sheet_w} scaleH={sheet_h} pages=1 packed=0",
-        f'page id=0 file="{name}.png"',
-        f"chars count={len(glyphs)}",
-    ]
-    for g in glyphs:
-        lines.append(
-            f"char id={ord(g['ch'])} x={g['x']} y={g['y']} width={g['w']} height={g['h']} "
-            f"xoffset={g['xoffset']} yoffset={g['yoffset']} xadvance={g['xadvance']} page=0 chnl=15"
-        )
-    (FONT_OUT / f"{name}.fnt").write_text("\n".join(lines) + "\n")
+    write_font(name, font.getname()[0], size, ascent + descent, ascent, glyphs)
 
 
-def build_wordmark():
-    """'SPLIT DECISIONS' in amber, letter-spaced, as one bitmap."""
-    font = ImageFont.truetype(str(ARCHIVO_BLACK), 21)
-    text, tracking = "SPLIT DECISIONS", 4
-    width = sum(font.getlength(c) for c in text) + tracking * (len(text) - 1)
-    ascent, descent = font.getmetrics()
-    img = Image.new("RGBA", (round(width) + 2, ascent + descent), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
-    x = 1.0
-    for c in text:
-        draw.text((x, 0), c, font=font, fill=AMBER + (255,))
-        x += font.getlength(c) + tracking
-    img = img.crop(img.getbbox())
-    flatten(img).save(DRAW_OUT / "wordmark.png")
+SEGMENTS = {
+    "0": "abcdef", "1": "bc", "2": "abged", "3": "abgcd", "4": "fgbc",
+    "5": "afgcd", "6": "afgedc", "7": "abc", "8": "abcdefg", "9": "abcdfg",
+}
+SUPERSAMPLE = 4
+
+
+def segment_polys(w, h, t):
+    """Hexagonal segments a-g for a digit cell of w x h with thickness t."""
+    g = max(1, t * 0.18)
+    left, right = t / 2, w - t / 2
+    top, mid, bottom = t / 2, h / 2, h - t / 2
+    half = t / 2
+
+    def horiz(x0, x1, y):
+        return [(x0, y), (x0 + half, y - half), (x1 - half, y - half), (x1, y), (x1 - half, y + half), (x0 + half, y + half)]
+
+    def vert(x, y0, y1):
+        return [(x, y0), (x + half, y0 + half), (x + half, y1 - half), (x, y1), (x - half, y1 - half), (x - half, y0 + half)]
+
+    return {
+        "a": horiz(left + g, right - g, top),
+        "b": vert(right, top + g, mid - g),
+        "c": vert(right, mid + g, bottom - g),
+        "d": horiz(left + g, right - g, bottom),
+        "e": vert(left, mid + g, bottom - g),
+        "f": vert(left, top + g, mid - g),
+        "g": horiz(left + g, right - g, mid),
+    }
+
+
+def build_segment_font(name, w, h, t):
+    spacing = t * 0.9
+    colon_w = t * 1.2
+    polys = segment_polys(w, h, t)
+    glyphs = []
+    for ch in DIGITS + ":":
+        cell_w = colon_w if ch == ":" else w
+        big = Image.new("L", (round(cell_w * SUPERSAMPLE), h * SUPERSAMPLE), 0)
+        draw = ImageDraw.Draw(big)
+        if ch == ":":
+            for cy in (h * 0.3, h * 0.7):
+                x0 = (colon_w - t) / 2
+                draw.rectangle([x0 * SUPERSAMPLE, (cy - t / 2) * SUPERSAMPLE, (x0 + t) * SUPERSAMPLE - 1, (cy + t / 2) * SUPERSAMPLE - 1], fill=255)
+        else:
+            for seg in SEGMENTS[ch]:
+                draw.polygon([(x * SUPERSAMPLE, y * SUPERSAMPLE) for x, y in polys[seg]], fill=255)
+        img = big.resize((round(cell_w), h), Image.LANCZOS)
+        glyphs.append(dict(
+            ch=ch, img=img, w=img.width, h=h,
+            # Half the gap on each side, so a string's measured width centers on its ink.
+            xoffset=round(spacing / 2), yoffset=0, xadvance=round(cell_w + spacing),
+        ))
+    write_font(name, "Split Decisions Segments", h, h, h, glyphs)
 
 
 def build_launcher_icon():
@@ -120,21 +173,17 @@ def build_launcher_icon():
     draw.text((size / 2, size / 2 - 4), "SD", font=font, fill=INK + (255,), anchor="mm")
     draw.rectangle((18, 56, 38, 59), fill=AMBER + (255,))
     draw.rectangle((42, 56, 62, 59), fill=AMBER + (255,))
-    flatten(img).save(DRAW_OUT / "launcher_icon.png")
-
-
-def flatten(img):
-    # Watch faces draw on black; baking that in avoids fringes from partial alpha.
     out = Image.new("RGB", img.size, (0, 0, 0))
     out.paste(img, mask=img.split()[3])
-    return out
+    out.save(DRAW_OUT / "launcher_icon.png")
 
 
 if __name__ == "__main__":
     FONT_OUT.mkdir(parents=True, exist_ok=True)
     DRAW_OUT.mkdir(parents=True, exist_ok=True)
-    for spec in FONTS:
-        build_font(*spec)
-    build_wordmark()
+    for spec in TEXT_FONTS:
+        build_text_font(*spec)
+    for spec in SEGMENT_FONTS:
+        build_segment_font(*spec)
     build_launcher_icon()
-    print("Wrote fonts to", FONT_OUT, "and drawables to", DRAW_OUT)
+    print("Wrote fonts to", FONT_OUT, "and the launcher icon to", DRAW_OUT)

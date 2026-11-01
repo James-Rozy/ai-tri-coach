@@ -8,48 +8,51 @@ import Toybox.SensorHistory;
 import Toybox.System;
 import Toybox.Time;
 import Toybox.Time.Gregorian;
+import Toybox.UserProfile;
+import Toybox.Weather;
 import Toybox.WatchUi;
 
 // Race Timing palette, matching the site's tokens in src/styles/global.css.
 const COLOR_BG = 0x000000;
-const COLOR_SURFACE = 0x151A21;
-const COLOR_LINE = 0x262C36;
+const COLOR_TRACK = 0x161B22;
+const COLOR_GHOST = 0x13171D;
 const COLOR_INK = 0xF2F4F7;
 const COLOR_MUTED = 0xA9B2C0;
 const COLOR_FAINT = 0x7D8796;
 const COLOR_ACCENT = 0xFFB020;
+const COLOR_ALERT = 0xE5484D;
 
-// The five legs of the day ring, in race order.
-const LEG_NAMES = ["SWIM", "T1", "BIKE", "T2", "RUN"];
-const LEG_PROPS = ["SwimMin", "T1Min", "BikeMin", "T2Min", "RunMin"];
-const LEG_DEFAULTS = [32, 4, 155, 3, 106];
-const LEG_COLORS = [0x2EA4DC, 0x8A939F, 0xF28E42, 0x8A939F, 0x35C177];
-const LEG_DIMS = [0x0F3446, 0x2C2F33, 0x4D2D15, 0x2C2F33, 0x113E26];
+// Swim, bike, run. These colors only ever mean the sport.
+const SPORT_COLORS = [0x2EA4DC, 0xF28E42, 0x35C177];
+// HR zones 1 to 5.
+const ZONE_COLORS = [0x7D8796, 0x2EA4DC, 0x35C177, 0xF28E42, 0xE5484D];
 
 const DAY_NAMES = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const MONTH_NAMES = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+const WEEK_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
 
 // Always-on drift, one step per minute, so no pixel stays lit in one place.
 const AOD_SHIFTS = [[0, 0], [3, 2], [-2, 3], [-3, -2], [2, -3]];
 
-// Layout is designed on the 454px Fenix 9 Pro 47mm and scaled from there.
+// Layout is designed on the 454px Fenix 9 Pro 47mm (see the mockup) and scaled from there.
 const DESIGN_SIZE = 454.0;
-const RING_R = 213;
-const RING_W = 12;
-const GAP_DEG = 1.5;
+const GAUGE_R = 221;
+const RECOVERY_MAX_HOURS = 96;
 
 class SplitDecisionsView extends WatchUi.WatchFace {
 
     private var _asleep as Boolean = false;
+    private var _week as TrainingWeek = new TrainingWeek();
+    private var _weekLoadedMinute as Number = -1;
+    private var _hrZones as Array<Number>? = null;
 
-    private var _timeFont as WatchUi.FontResource;
-    private var _labelFont as WatchUi.FontResource;
-    private var _smallFont as WatchUi.FontResource;
-    private var _legFont as WatchUi.FontResource;
-    private var _dateFont as WatchUi.FontResource;
-    private var _valueFont as WatchUi.FontResource;
-    private var _secsFont as WatchUi.FontResource;
-    private var _wordmark as WatchUi.BitmapResource;
+    private var _segTime as WatchUi.FontResource;
+    private var _segSecs as WatchUi.FontResource;
+    private var _numLarge as WatchUi.FontResource;
+    private var _numMedium as WatchUi.FontResource;
+    private var _numSmall as WatchUi.FontResource;
+    private var _label as WatchUi.FontResource;
+    private var _bold as WatchUi.FontResource;
 
     // Set at the top of each onUpdate.
     private var _cx as Number = 227;
@@ -58,14 +61,16 @@ class SplitDecisionsView extends WatchUi.WatchFace {
 
     function initialize() {
         WatchFace.initialize();
-        _timeFont = WatchUi.loadResource(Rez.Fonts.TimeLarge) as WatchUi.FontResource;
-        _labelFont = WatchUi.loadResource(Rez.Fonts.MonoLabel) as WatchUi.FontResource;
-        _smallFont = WatchUi.loadResource(Rez.Fonts.MonoSmall) as WatchUi.FontResource;
-        _legFont = WatchUi.loadResource(Rez.Fonts.MonoLeg) as WatchUi.FontResource;
-        _dateFont = WatchUi.loadResource(Rez.Fonts.MonoDate) as WatchUi.FontResource;
-        _valueFont = WatchUi.loadResource(Rez.Fonts.MonoValue) as WatchUi.FontResource;
-        _secsFont = WatchUi.loadResource(Rez.Fonts.MonoSecs) as WatchUi.FontResource;
-        _wordmark = WatchUi.loadResource(Rez.Drawables.Wordmark) as WatchUi.BitmapResource;
+        _segTime = WatchUi.loadResource(Rez.Fonts.SegTime) as WatchUi.FontResource;
+        _segSecs = WatchUi.loadResource(Rez.Fonts.SegSecs) as WatchUi.FontResource;
+        _numLarge = WatchUi.loadResource(Rez.Fonts.NumLarge) as WatchUi.FontResource;
+        _numMedium = WatchUi.loadResource(Rez.Fonts.NumMedium) as WatchUi.FontResource;
+        _numSmall = WatchUi.loadResource(Rez.Fonts.NumSmall) as WatchUi.FontResource;
+        _label = WatchUi.loadResource(Rez.Fonts.MonoLabel) as WatchUi.FontResource;
+        _bold = WatchUi.loadResource(Rez.Fonts.MonoBold) as WatchUi.FontResource;
+        if (UserProfile has :getHeartRateZones) {
+            _hrZones = UserProfile.getHeartRateZones(UserProfile.HR_ZONE_SPORT_GENERIC);
+        }
     }
 
     function onUpdate(dc as Graphics.Dc) as Void {
@@ -76,11 +81,13 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         var settings = System.getDeviceSettings();
         var burnIn = (settings has :requiresBurnInProtection) && settings.requiresBurnInProtection;
         var aod = _asleep && burnIn;
-        var showSeconds = !_asleep;
-
         var clock = System.getClockTime();
-        var mins = clock.hour * 60 + clock.min + (showSeconds ? clock.sec / 60.0 : 0.0);
-        var nowDeg = mins / 1440.0 * 360.0;
+
+        // Activity history only changes between activities; once a minute is plenty.
+        if (clock.min != _weekLoadedMinute) {
+            _week.load();
+            _weekLoadedMinute = clock.min;
+        }
 
         _cx = w / 2;
         _cy = h / 2;
@@ -96,158 +103,192 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             dc.setAntiAlias(true);
         }
 
-        // Day ring: race splits stretched over 24 hours, lit up to now.
-        var ends = legEnds();
-        var start = 0.0;
-        for (var i = 0; i < LEG_NAMES.size(); i++) {
-            var a0 = start / 1440.0 * 360.0 + GAP_DEG / 2;
-            var a1 = ends[i] / 1440.0 * 360.0 - GAP_DEG / 2;
-            if (!aod) {
-                drawRingArc(dc, a0, a1, LEG_DIMS[i], RING_W, RING_R);
-            }
-            drawRingArc(dc, a0, a1 < nowDeg ? a1 : nowDeg, LEG_COLORS[i], aod ? 4 : RING_W, aod ? RING_R - 4 : RING_R);
-            start = ends[i];
-        }
-        var rad = Math.toRadians(nowDeg - 90);
-        dc.setColor(COLOR_INK, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(aod ? 3 : 4);
-        dc.drawLine(
-            _cx + Math.cos(rad) * (RING_R - 14) * _s, _cy + Math.sin(rad) * (RING_R - 14) * _s,
-            _cx + Math.cos(rad) * (RING_R + 8) * _s, _cy + Math.sin(rad) * (RING_R + 8) * _s
-        );
-
-        if (!aod) {
-            dc.drawBitmap(_cx - _wordmark.getWidth() / 2, y(80) - _wordmark.getHeight(), _wordmark);
-        }
-
-        // Date
-        var today = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
-        var dateStr = DAY_NAMES[(today.day_of_week as Number) - 1] + " " + (today.day as Number).format("%02d") + " "
-            + MONTH_NAMES[(today.month as Number) - 1];
-        drawBaseline(dc, _cx, y(114), _dateFont, dateStr, aod ? COLOR_FAINT : COLOR_MUTED, Graphics.TEXT_JUSTIFY_CENTER);
-
-        // Time, with amber seconds while awake
-        var hour = clock.hour;
-        var timeStr;
-        if (settings.is24Hour) {
-            timeStr = hour.format("%02d") + ":" + clock.min.format("%02d");
-        } else {
-            hour = hour % 12 == 0 ? 12 : hour % 12;
-            timeStr = hour.format("%d") + ":" + clock.min.format("%02d");
-        }
-        var secStr = clock.sec.format("%02d");
-        var tw = dc.getTextWidthInPixels(timeStr, _timeFont);
-        var sw = showSeconds ? dc.getTextWidthInPixels(secStr, _secsFont) + 8 : 0;
-        var left = _cx - (tw + sw) / 2;
-        drawBaseline(dc, left, y(240), _timeFont, timeStr, aod ? COLOR_MUTED : COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
-        if (showSeconds) {
-            drawBaseline(dc, left + tw + 8, y(240), _secsFont, secStr, COLOR_ACCENT, Graphics.TEXT_JUSTIFY_LEFT);
-        }
-
-        // Leg line: "BIKE  T2 IN 3:05"
-        var leg = LEG_NAMES.size() - 1;
-        for (var i = 0; i < ends.size(); i++) {
-            if (mins < ends[i]) {
-                leg = i;
-                break;
-            }
-        }
-        var next = leg < LEG_NAMES.size() - 1 ? LEG_NAMES[leg + 1] : "FINISH";
-        var rest = "  " + next + " IN " + formatMinutes(ends[leg] - mins);
-        var lw = dc.getTextWidthInPixels(LEG_NAMES[leg], _legFont);
-        var rw = dc.getTextWidthInPixels(rest, _legFont);
-        var lx = _cx - (lw + rw) / 2;
-        drawBaseline(dc, lx, y(278), _legFont, LEG_NAMES[leg], LEG_COLORS[leg], Graphics.TEXT_JUSTIFY_LEFT);
-        drawBaseline(dc, lx + lw, y(278), _legFont, rest, aod ? COLOR_FAINT : COLOR_MUTED, Graphics.TEXT_JUSTIFY_LEFT);
-
-        if (!aod) {
-            drawSplitsPanel(dc);
-            var battery = System.getSystemStats().battery.toNumber();
-            drawBaseline(dc, _cx, y(402), _smallFont, "BATT " + battery + "%", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
-        }
-
+        drawGauges(dc, aod);
         if (aod) {
-            // Black out every other row, alternating each minute, for AMOLED burn-in protection.
-            if (dc has :setAntiAlias) {
-                dc.setAntiAlias(false);
-            }
-            dc.setColor(COLOR_BG, COLOR_BG);
-            dc.setPenWidth(1);
-            for (var row = clock.min % 2; row < h; row += 2) {
-                dc.drawLine(0, row, w, row);
-            }
+            drawAlwaysOn(dc, clock);
+            return;
+        }
+
+        drawWeekHeader(dc);
+        drawTopRow(dc);
+        drawWeekStrip(dc);
+        drawClock(dc, clock, settings.is24Hour);
+
+        var today = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
+        drawCentered(dc, y(330), _bold, dateText(today), COLOR_MUTED);
+
+        var race = Application.Properties.getValue("RaceName");
+        var raceDays = daysUntil(Application.Properties.getValue("RaceDate"), today);
+        if (race instanceof String && raceDays != null) {
+            drawRuns(dc, y(368), [
+                [race.toUpper(), _label, COLOR_FAINT, 10],
+                [raceDays.toString(), _numMedium, COLOR_INK, 4],
+                ["DAYS", _label, COLOR_FAINT, 0]
+            ]);
+        }
+
+        var battery = System.getSystemStats().battery.toNumber();
+        drawCentered(dc, y(414), _bold, battery.toString() + "%", battery < 20 ? COLOR_ALERT : COLOR_MUTED);
+    }
+
+    // Four gauges flush with the bezel: week (top), recovery (right), battery (bottom), Body Battery (left).
+    private function drawGauges(dc as Graphics.Dc, aod as Boolean) as Void {
+        var width = aod ? 3 : 6;
+        if (!aod) {
+            drawClockArc(dc, 333.0, 387.0, COLOR_TRACK, width);
+            drawClockArc(dc, 125.0, 55.0, COLOR_TRACK, width);
+            drawClockArc(dc, 207.0, 153.0, COLOR_TRACK, width);
+            drawClockArc(dc, 235.0, 305.0, COLOR_TRACK, width);
+        }
+
+        // Top: this week's hours by sport, filling clockwise toward the target.
+        var target = targetMinutes();
+        var done = 0;
+        for (var i = 0; i < 3; i++) {
+            var from = 333.0 + 54.0 * min(done, target) / target;
+            done += _week.seconds[i] / 60;
+            var to = 333.0 + 54.0 * min(done, target) / target;
+            drawClockArc(dc, from, to - 0.8, SPORT_COLORS[i], width);
+        }
+
+        // Right: recovery hours left, emptying as you recover.
+        var recovery = recoveryHours();
+        if (recovery != null) {
+            drawClockArc(dc, 125.0, 125.0 - 70.0 * min(recovery, RECOVERY_MAX_HOURS) / RECOVERY_MAX_HOURS, COLOR_INK, width);
+        }
+
+        // Bottom: watch battery, filling left to right, red when low.
+        var battery = System.getSystemStats().battery;
+        drawClockArc(dc, 207.0, 207.0 - 54.0 * battery / 100.0, battery < 20 ? COLOR_ALERT : COLOR_MUTED, width);
+
+        // Left: Body Battery, filling upward.
+        var bb = bodyBattery();
+        if (bb != null) {
+            drawClockArc(dc, 235.0, 235.0 + 70.0 * bb / 100.0, COLOR_INK, width);
         }
     }
 
-    // The timing-mat strip: HR, steps, Body Battery.
-    private function drawSplitsPanel(dc as Graphics.Dc) as Void {
-        var px = x(90);
-        var py = y(300);
-        var pw = (274 * _s).toNumber();
-        var ph = (66 * _s).toNumber();
-        dc.setColor(COLOR_SURFACE, Graphics.COLOR_TRANSPARENT);
-        dc.fillRoundedRectangle(px, py, pw, ph, 6);
-        dc.setColor(COLOR_ACCENT, Graphics.COLOR_TRANSPARENT);
-        dc.fillRectangle(px, py, pw, 3);
+    // Week total and each sport's distance, under the top gauge.
+    private function drawWeekHeader(dc as Graphics.Dc) as Void {
+        drawRuns(dc, y(52), [
+            [formatMinutes(_week.totalMinutes()), _numMedium, COLOR_INK, 2],
+            ["/" + (targetMinutes() / 60).toString() + "H", _label, COLOR_FAINT, 0]
+        ]);
 
+        var statute = System.getDeviceSettings().distanceUnits == System.UNIT_STATUTE;
+        for (var i = 0; i < 3; i++) {
+            var value = distanceValue(i, statute);
+            var unit = distanceUnit(i, statute);
+            var vw = dc.getTextWidthInPixels(value, _numSmall);
+            var uw = dc.getTextWidthInPixels(unit, _label);
+            var colX = _cx + (((i - 1) * 86) * _s).toNumber();
+            var x0 = colX - (vw + 3 + uw - 12) / 2;
+            dc.setColor(SPORT_COLORS[i], Graphics.COLOR_TRANSPARENT);
+            dc.fillRectangle(x0 - 12, y(72), 6, 6);
+            drawBaseline(dc, x0, y(84), _numSmall, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
+            drawBaseline(dc, x0 + vw + 3, y(84), _label, unit, COLOR_FAINT, Graphics.TEXT_JUSTIFY_LEFT);
+        }
+    }
+
+    // HR with a zone pip, steps, weather.
+    private function drawTopRow(dc as Graphics.Dc) as Void {
         var hr = heartRate();
-        var bb = bodyBattery();
         var steps = ActivityMonitor.getInfo().steps;
-        var labels = ["HR", "STEPS", "BODY BAT"];
+        var labels = ["HR", "STEPS", "WEATHER"];
         var values = [
             hr == null ? "--" : hr.toString(),
             steps == null ? "--" : thousands(steps),
-            bb == null ? "--" : bb.toString()
+            temperature()
         ];
-        var cw = pw / labels.size();
-        for (var i = 0; i < labels.size(); i++) {
-            var cellX = px + cw * i + cw / 2;
-            if (i > 0) {
-                dc.setColor(COLOR_LINE, Graphics.COLOR_TRANSPARENT);
-                dc.fillRectangle(px + cw * i, py + 12, 1, ph - 22);
+        for (var i = 0; i < 3; i++) {
+            var colX = _cx + (((i - 1) * 100) * _s).toNumber();
+            drawBaseline(dc, colX, y(114), _label, labels[i], COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
+            drawBaseline(dc, colX, y(144), _numLarge, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        }
+        if (hr != null) {
+            var vw = dc.getTextWidthInPixels(values[0], _numLarge);
+            dc.setColor(zoneColor(hr), Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(_cx - (100 * _s).toNumber() - vw / 2 - 10, y(134), 4);
+        }
+    }
+
+    // Plan week, then Monday to Sunday with sport dots. Today is amber.
+    private function drawWeekStrip(dc as Graphics.Dc) as Void {
+        var plan = planText();
+        if (plan != null) {
+            drawCentered(dc, y(174), _bold, plan, COLOR_INK);
+        }
+        var todayIdx = TrainingWeek.todayIndex();
+        for (var i = 0; i < 7; i++) {
+            var lx = _cx + (((i - 3) * 26) * _s).toNumber();
+            var color = i == todayIdx ? COLOR_ACCENT : (i > todayIdx ? COLOR_FAINT : COLOR_MUTED);
+            drawBaseline(dc, lx, y(198), _bold, WEEK_LETTERS[i], color, Graphics.TEXT_JUSTIFY_CENTER);
+            if (i == todayIdx) {
+                dc.setColor(COLOR_ACCENT, Graphics.COLOR_TRANSPARENT);
+                dc.fillRectangle(lx - 7, y(203), 14, 2);
             }
-            drawBaseline(dc, cellX, py + 24, _labelFont, labels[i], COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
-            drawBaseline(dc, cellX, py + 55, _valueFont, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+            var mask = _week.dayMask[i];
+            var count = 0;
+            for (var s = 0; s < 3; s++) {
+                if ((mask & (1 << s)) != 0) {
+                    count++;
+                }
+            }
+            var dx = lx - count * 7 / 2 + 1;
+            for (var s = 0; s < 3; s++) {
+                if ((mask & (1 << s)) != 0) {
+                    dc.setColor(SPORT_COLORS[s], Graphics.COLOR_TRANSPARENT);
+                    dc.fillRectangle(dx, y(209), 5, 5);
+                    dx += 7;
+                }
+            }
         }
     }
 
-    // Draws an arc clockwise from a0 to a1, both in degrees from 12 o'clock.
-    private function drawRingArc(dc as Graphics.Dc, a0 as Float, a1 as Float, color as Number, width as Number, r as Number) as Void {
-        if (a1 - a0 < 0.5) {
-            return;
+    // Segment time with faint unlit segments, amber seconds, and the two gauge readouts beside it.
+    private function drawClock(dc as Graphics.Dc, clock as System.ClockTime, is24Hour as Boolean) as Void {
+        var timeStr = hourText(clock.hour, is24Hour) + ":" + clock.min.format("%02d");
+        var secStr = clock.sec.format("%02d");
+        var top = y(228);
+        var tw = dc.getTextWidthInPixels(timeStr, _segTime);
+        var sw = dc.getTextWidthInPixels(secStr, _segSecs);
+        var left = _cx - (tw + 10 + sw) / 2;
+
+        drawTop(dc, left, top, _segTime, "88:88", COLOR_GHOST);
+        drawTop(dc, left, top, _segTime, timeStr, COLOR_INK);
+        if (!is24Hour) {
+            drawBaseline(dc, left + tw + 10 + sw / 2, top + 22, _label, clock.hour < 12 ? "AM" : "PM", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
         }
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth((width * _s).toNumber());
-        dc.drawArc(_cx, _cy, (r * _s).toNumber(), Graphics.ARC_CLOCKWISE, toArcDegrees(a0), toArcDegrees(a1));
+        drawTop(dc, left + tw + 10, top + 46, _segSecs, "88", COLOR_GHOST);
+        drawTop(dc, left + tw + 10, top + 46, _segSecs, secStr, COLOR_ACCENT);
+
+        var bb = bodyBattery();
+        drawBaseline(dc, x(46), top + 40, _numMedium, bb == null ? "--" : bb.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, x(46), top + 58, _label, "BB", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
+        var recovery = recoveryHours();
+        drawBaseline(dc, x(410), top + 40, _numMedium, recovery == null ? "--" : recovery.toString() + "H", COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, x(410), top + 58, _label, "REC", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
     }
 
-    // Garmin arcs count counter-clockwise from 3 o'clock.
-    private function toArcDegrees(clockDeg as Float) as Float {
-        var d = 90.0 - clockDeg;
-        while (d < 0) {
-            d += 360.0;
+    // Wrist down: dimmed time and date with the gauges, then every other row blacked out
+    // (alternating each minute) for AMOLED burn-in protection.
+    private function drawAlwaysOn(dc as Graphics.Dc, clock as System.ClockTime) as Void {
+        var timeStr = hourText(clock.hour, System.getDeviceSettings().is24Hour) + ":" + clock.min.format("%02d");
+        var tw = dc.getTextWidthInPixels(timeStr, _segTime);
+        drawTop(dc, _cx - tw / 2, y(190), _segTime, timeStr, COLOR_MUTED);
+        drawCentered(dc, y(298), _bold, dateText(Gregorian.info(Time.now(), Time.FORMAT_SHORT)), COLOR_FAINT);
+
+        if (dc has :setAntiAlias) {
+            dc.setAntiAlias(false);
         }
-        return d;
+        dc.setColor(COLOR_BG, COLOR_BG);
+        dc.setPenWidth(1);
+        for (var row = clock.min % 2; row < dc.getHeight(); row += 2) {
+            dc.drawLine(0, row, dc.getWidth(), row);
+        }
     }
 
-    // Each leg's end as a minute of the day, from the split settings.
-    private function legEnds() as Array<Float> {
-        var splits = [] as Array<Number>;
-        var total = 0;
-        for (var i = 0; i < LEG_PROPS.size(); i++) {
-            var v = Application.Properties.getValue(LEG_PROPS[i]);
-            var m = (v instanceof Number && v > 0) ? v : LEG_DEFAULTS[i];
-            splits.add(m);
-            total += m;
-        }
-        var ends = [] as Array<Float>;
-        var acc = 0;
-        for (var i = 0; i < splits.size(); i++) {
-            acc += splits[i];
-            ends.add(acc * 1440.0 / total);
-        }
-        return ends;
-    }
+    // ---- Data ----
 
     private function heartRate() as Number? {
         var info = Activity.getActivityInfo();
@@ -263,6 +304,19 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         return null;
     }
 
+    private function zoneColor(hr as Number) as Number {
+        var zones = _hrZones;
+        if (zones == null || zones.size() < 6 || hr < zones[0]) {
+            return ZONE_COLORS[0];
+        }
+        for (var i = 1; i < 6; i++) {
+            if (hr <= zones[i]) {
+                return ZONE_COLORS[i - 1];
+            }
+        }
+        return ZONE_COLORS[4];
+    }
+
     private function bodyBattery() as Number? {
         if ((Toybox has :SensorHistory) && (SensorHistory has :getBodyBatteryHistory)) {
             var sample = SensorHistory.getBodyBatteryHistory({:period => 1}).next();
@@ -273,11 +327,170 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         return null;
     }
 
+    private function recoveryHours() as Number? {
+        var info = ActivityMonitor.getInfo();
+        if ((info has :timeToRecovery) && info.timeToRecovery != null) {
+            return info.timeToRecovery;
+        }
+        return null;
+    }
+
+    private function temperature() as String {
+        if (Toybox has :Weather) {
+            var conditions = Weather.getCurrentConditions();
+            if (conditions != null && conditions.temperature != null) {
+                var t = conditions.temperature.toFloat();
+                if (System.getDeviceSettings().temperatureUnits == System.UNIT_STATUTE) {
+                    t = t * 9 / 5 + 32;
+                }
+                return Math.round(t).toNumber().toString() + "°";
+            }
+        }
+        return "--";
+    }
+
+    private function targetMinutes() as Number {
+        var hours = Application.Properties.getValue("TargetHours");
+        return ((hours instanceof Number && hours > 0) ? hours : 7) * 60;
+    }
+
+    // "BASE WK 1", or "BASE IN 2D" before the block starts.
+    private function planText() as String? {
+        var name = Application.Properties.getValue("PlanName");
+        var today = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
+        var until = daysUntil(Application.Properties.getValue("PlanStart"), today);
+        if (!(name instanceof String) || until == null) {
+            return null;
+        }
+        if (until > 0) {
+            return name.toUpper() + " IN " + until.toString() + "D";
+        }
+        return name.toUpper() + " WK " + (-until / 7 + 1).toString();
+    }
+
+    // Days from today to a "YYYY-MM-DD" setting, or null if it doesn't parse.
+    private function daysUntil(value as Application.PropertyValueType, today as Gregorian.Info) as Number? {
+        if (!(value instanceof String) || value.length() != 10) {
+            return null;
+        }
+        var yr = value.substring(0, 4).toNumber();
+        var mo = value.substring(5, 7).toNumber();
+        var dy = value.substring(8, 10).toNumber();
+        if (yr == null || mo == null || dy == null) {
+            return null;
+        }
+        return civilDays(yr, mo, dy) - civilDays(today.year as Number, today.month as Number, today.day as Number);
+    }
+
+    // Days since 1970-01-01 for a calendar date (Howard Hinnant's algorithm), so date math ignores time zones.
+    private function civilDays(yr as Number, mo as Number, dy as Number) as Number {
+        if (mo <= 2) {
+            yr -= 1;
+        }
+        var era = (yr >= 0 ? yr : yr - 399) / 400;
+        var yoe = yr - era * 400;
+        var doy = (153 * (mo + (mo > 2 ? -3 : 9)) + 2) / 5 + dy - 1;
+        var doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+        return era * 146097 + doe - 719468;
+    }
+
+    // ---- Formatting ----
+
+    private function distanceValue(sport as Number, statute as Boolean) as String {
+        var m = _week.meters[sport];
+        if (sport == SPORT_SWIM) {
+            return thousands((statute ? m * 1.09361 : m).toNumber());
+        }
+        return (statute ? m / 1609.344 : m / 1000).format("%.1f");
+    }
+
+    private function distanceUnit(sport as Number, statute as Boolean) as String {
+        if (sport == SPORT_SWIM) {
+            return statute ? "YD" : "M";
+        }
+        return statute ? "MI" : "KM";
+    }
+
+    private function dateText(today as Gregorian.Info) as String {
+        return DAY_NAMES[(today.day_of_week as Number) - 1] + " " + (today.day as Number).format("%02d") + " "
+            + MONTH_NAMES[(today.month as Number) - 1];
+    }
+
+    private function hourText(hour as Number, is24Hour as Boolean) as String {
+        if (!is24Hour) {
+            hour = hour % 12 == 0 ? 12 : hour % 12;
+        }
+        return hour.format("%02d");
+    }
+
+    private function formatMinutes(m as Number) as String {
+        return (m / 60).format("%d") + ":" + (m % 60).format("%02d");
+    }
+
+    private function thousands(n as Number) as String {
+        if (n < 1000) {
+            return n.toString();
+        }
+        return thousands(n / 1000) + "," + (n % 1000).format("%03d");
+    }
+
+    // ---- Drawing helpers ----
+
+    // An arc between two angles in degrees clockwise from 12 o'clock, in either direction.
+    private function drawClockArc(dc as Graphics.Dc, from as Float, to as Float, color as Number, width as Number) as Void {
+        var span = to - from;
+        if (span < 0.5 && span > -0.5) {
+            return;
+        }
+        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth((width * _s).toNumber());
+        var dir = span > 0 ? Graphics.ARC_CLOCKWISE : Graphics.ARC_COUNTER_CLOCKWISE;
+        dc.drawArc(_cx, _cy, (GAUGE_R * _s).toNumber(), dir, toArcDegrees(from), toArcDegrees(to));
+    }
+
+    // Garmin arcs count counter-clockwise from 3 o'clock.
+    private function toArcDegrees(clockDeg as Float) as Float {
+        var d = 90.0 - clockDeg;
+        while (d < 0) {
+            d += 360.0;
+        }
+        while (d >= 360) {
+            d -= 360.0;
+        }
+        return d;
+    }
+
+    // Several differently styled pieces, centered as one line on a shared baseline.
+    // Each piece is [text, font, color, gap after].
+    private function drawRuns(dc as Graphics.Dc, baseline as Number, pieces as Array<Array>) as Void {
+        var total = 0;
+        for (var i = 0; i < pieces.size(); i++) {
+            var p = pieces[i];
+            total += dc.getTextWidthInPixels(p[0] as String, p[1] as WatchUi.FontResource) + (p[3] as Number);
+        }
+        var px = _cx - total / 2;
+        for (var i = 0; i < pieces.size(); i++) {
+            var p = pieces[i];
+            drawBaseline(dc, px, baseline, p[1] as WatchUi.FontResource, p[0] as String, p[2] as Number, Graphics.TEXT_JUSTIFY_LEFT);
+            px += dc.getTextWidthInPixels(p[0] as String, p[1] as WatchUi.FontResource) + (p[3] as Number);
+        }
+    }
+
+    private function drawCentered(dc as Graphics.Dc, baseline as Number, font as WatchUi.FontResource, text as String, color as Number) as Void {
+        drawBaseline(dc, _cx, baseline, font, text, color, Graphics.TEXT_JUSTIFY_CENTER);
+    }
+
     // Text placed by its baseline, the way the mockup lays it out.
     private function drawBaseline(dc as Graphics.Dc, px as Numeric, baseline as Numeric, font as WatchUi.FontResource,
             text as String, color as Number, justify as Number) as Void {
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
         dc.drawText(px, baseline - Graphics.getFontAscent(font), font, text, justify);
+    }
+
+    // Text placed by its top edge, for the segment fonts.
+    private function drawTop(dc as Graphics.Dc, px as Numeric, top as Numeric, font as WatchUi.FontResource, text as String, color as Number) as Void {
+        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(px, top, font, text, Graphics.TEXT_JUSTIFY_LEFT);
     }
 
     private function x(v as Numeric) as Number {
@@ -288,16 +501,8 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         return _cy + ((v - 227) * _s).toNumber();
     }
 
-    private function formatMinutes(m as Float) as String {
-        var t = m.toNumber();
-        return (t / 60).format("%d") + ":" + (t % 60).format("%02d");
-    }
-
-    private function thousands(n as Number) as String {
-        if (n < 1000) {
-            return n.toString();
-        }
-        return thousands(n / 1000) + "," + (n % 1000).format("%03d");
+    private function min(a as Number, b as Number) as Number {
+        return a < b ? a : b;
     }
 
     function onExitSleep() as Void {

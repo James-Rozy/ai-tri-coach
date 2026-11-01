@@ -1,17 +1,17 @@
 <settings>
-    <setting propertyKey="@Properties.SwimMin" title="@Strings.SwimTitle">
-        <settingConfig type="numeric" min="1" max="600"/>
+    <setting propertyKey="@Properties.TargetHours" title="@Strings.TargetTitle">
+        <settingConfig type="numeric" min="1" max="40"/>
     </setting>
-    <setting propertyKey="@Properties.T1Min" title="@Strings.T1Title">
-        <settingConfig type="numeric" min="1" max="600"/>
+    <setting propertyKey="@Properties.PlanName" title="@Strings.PlanNameTitle">
+        <settingConfig type="alphaNumeric" maxLength="8"/>
     </setting>
-    <setting propertyKey="@Properties.BikeMin" title="@Strings.BikeTitle">
-        <settingConfig type="numeric" min="1" max="600"/>
+    <setting propertyKey="@Properties.PlanStart" title="@Strings.PlanStartTitle">
+        <settingConfig type="alphaNumeric" maxLength="10"/>
     </setting>
-    <setting propertyKey="@Properties.T2Min" title="@Strings.T2Title">
-        <settingConfig type="numeric" min="1" max="600"/>
+    <setting propertyKey="@Properties.RaceName" title="@Strings.RaceNameTitle">
+        <settingConfig type="alphaNumeric" maxLength="12"/>
     </setting>
-    <setting propertyKey="@Properties.RunMin" title="@Strings.RunTitle">
-        <settingConfig type="numeric" min="1" max="600"/>
+    <setting propertyKey="@Properties.RaceDate" title="@Strings.RaceDateTitle">
+        <settingConfig type="alphaNumeric" maxLength="10"/>
     </setting>
 </settings>
