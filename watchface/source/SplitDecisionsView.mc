@@ -160,11 +160,11 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             var colX = _cx + (((i - 1) * 86) * _s).toNumber();
             var x0 = colX - (vw + 3 + uw - 12) / 2;
             dc.setColor(SPORT_COLORS[i], Graphics.COLOR_TRANSPARENT);
-            dc.fillRectangle(x0 - 12, y(346), 6, 6);
-            drawBaseline(dc, x0, y(358), _numDetail, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
-            drawBaseline(dc, x0 + vw + 3, y(358), _label, unit, COLOR_FAINT, Graphics.TEXT_JUSTIFY_LEFT);
+            dc.fillRectangle(x0 - 12, y(358), 6, 6);
+            drawBaseline(dc, x0, y(370), _numDetail, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
+            drawBaseline(dc, x0 + vw + 3, y(370), _label, unit, COLOR_FAINT, Graphics.TEXT_JUSTIFY_LEFT);
         }
-        drawRuns(dc, y(390), [
+        drawRuns(dc, y(402), [
             [formatMinutes(_week.totalMinutes()), _numData, COLOR_INK, 2],
             ["/" + (targetMinutes() / 60).toString() + "H", _label, COLOR_FAINT, 0]
         ]);
