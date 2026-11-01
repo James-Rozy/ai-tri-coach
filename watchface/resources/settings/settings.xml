@@ -8,9 +8,6 @@
     <setting propertyKey="@Properties.PlanStart" title="@Strings.PlanStartTitle">
         <settingConfig type="alphaNumeric" maxLength="10"/>
     </setting>
-    <setting propertyKey="@Properties.RaceName" title="@Strings.RaceNameTitle">
-        <settingConfig type="alphaNumeric" maxLength="12"/>
-    </setting>
     <setting propertyKey="@Properties.RaceDate" title="@Strings.RaceDateTitle">
         <settingConfig type="alphaNumeric" maxLength="10"/>
     </setting>

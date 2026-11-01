@@ -4,12 +4,12 @@ A Connect IQ watch face for the Garmin Fēnix 9 Pro 47mm (454×454 AMOLED), in t
 
 **Three edge gauges**, one per third of the dial, flush with the bezel:
 - **Left (8 to 11 o'clock):** Body Battery, filling upward.
-- **Right (1 to 4 o'clock):** recovery time, full at Garmin's 96-hour max and emptying as you recover.
+- **Right (1 to 4 o'clock):** race countdown, filling from the plan start date to race day.
 - **Bottom (5 to 7 o'clock):** this week's training hours by sport (swim, bike, run colors), filling left to right toward your weekly target.
 
-**Center, top to bottom:** days to race day (in the gap at 12), HR with a zone-colored pip, steps and weather, the plan week ("BASE WK 1"), a Monday-to-Sunday strip with sport dots, the segment clock with amber seconds (Body Battery and recovery hours on either side), the date, swim/bike/run distance, and the week total.
+**Center, top to bottom:** HR with a zone-colored pip, steps and weather, the plan week ("BASE WK 1"), a Monday-to-Sunday strip with sport dots, the segment clock dead center with amber seconds (Body Battery on the left, days to race day on the right), the date, swim/bike/run distance, and the week total.
 
-**Always-on:** time, date and thin gauges only, dimmed. Every other pixel row is blacked out (alternating each minute) and the layout drifts a few pixels each minute, to stay inside Garmin's AMOLED burn-in rules.
+**Always-on:** time (in the same centered spot), date and thin gauges only, dimmed. Every other pixel row is blacked out (alternating each minute) and the layout drifts a few pixels each minute, to stay inside Garmin's AMOLED burn-in rules.
 
 The weekly numbers come from activities recorded on the watch since Monday. Anything logged elsewhere, like polo added by hand on Strava, won't count.
 
@@ -22,7 +22,6 @@ Garmin Connect app → the watch → Watch Faces → Split Decisions → Setting
 | Weekly training target (hours) | 7 |
 | Plan block name | BASE |
 | Plan start (YYYY-MM-DD) | 2026-11-01 |
-| Race name | MICH 70.3 |
 | Race date (YYYY-MM-DD) | 2027-09-19 (placeholder; the 2027 date isn't confirmed) |
 
 ## Run it in the simulator

@@ -3,6 +3,5 @@
     <property id="PlanName" type="string">BASE</property>
     <property id="PlanStart" type="string">2026-11-01</property>
     <!-- Michigan 2027 isn't confirmed; Sunday Sept 19 is a placeholder. -->
-    <property id="RaceName" type="string">MICH 70.3</property>
     <property id="RaceDate" type="string">2027-09-19</property>
 </properties>

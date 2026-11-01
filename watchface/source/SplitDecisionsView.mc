@@ -36,7 +36,6 @@ const AOD_SHIFTS = [[0, 0], [3, 2], [-2, 3], [-3, -2], [2, -3]];
 // Layout is designed on the 454px Fenix 9 Pro 47mm (see the mockup) and scaled from there.
 const DESIGN_SIZE = 454.0;
 const GAUGE_R = 221;
-const RECOVERY_MAX_HOURS = 96;
 
 class SplitDecisionsView extends WatchUi.WatchFace {
 
@@ -108,26 +107,14 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             return;
         }
 
-        // 12 o'clock, in the gap between the two upper gauges: days to race day.
-        var today = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
-        var race = Application.Properties.getValue("RaceName");
-        var raceDays = daysUntil(Application.Properties.getValue("RaceDate"), today);
-        if (race instanceof String && raceDays != null) {
-            drawRuns(dc, y(70), [
-                [race.toUpper(), _label, COLOR_FAINT, 10],
-                [raceDays.toString(), _numMedium, COLOR_INK, 4],
-                ["DAYS", _label, COLOR_FAINT, 0]
-            ]);
-        }
-
         drawTopRow(dc);
         drawWeekStrip(dc);
         drawClock(dc, clock, settings.is24Hour);
-        drawCentered(dc, y(330), _bold, dateText(today), COLOR_MUTED);
+        drawCentered(dc, y(298), _bold, dateText(Gregorian.info(Time.now(), Time.FORMAT_SHORT)), COLOR_MUTED);
         drawWeekSplits(dc);
     }
 
-    // Three gauges flush with the bezel, one per third of the dial, with 30 degree gaps at 12, 4 and 8 o'clock.
+    // Three gauges flush with the bezel (Body Battery, race countdown, week hours), one per third of the dial, with 30 degree gaps at 12, 4 and 8 o'clock.
     private function drawGauges(dc as Graphics.Dc, aod as Boolean) as Void {
         var width = aod ? 3 : 6;
         if (!aod) {
@@ -142,10 +129,10 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             drawClockArc(dc, 255.0, 255.0 + 90.0 * bb / 100.0, COLOR_INK, width);
         }
 
-        // Right, 1 to 4 o'clock: recovery hours left, emptying as you recover.
-        var recovery = recoveryHours();
-        if (recovery != null) {
-            drawClockArc(dc, 105.0, 105.0 - 90.0 * min(recovery, RECOVERY_MAX_HOURS) / RECOVERY_MAX_HOURS, COLOR_INK, width);
+        // Right, 1 to 4 o'clock: plan start to race day, filling upward as the race gets closer.
+        var progress = raceProgress();
+        if (progress != null) {
+            drawClockArc(dc, 105.0, 105.0 - 90.0 * progress, COLOR_INK, width);
         }
 
         // Bottom, 5 to 7 o'clock: this week's hours by sport, filling left to right toward the target.
@@ -170,11 +157,11 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             var colX = _cx + (((i - 1) * 86) * _s).toNumber();
             var x0 = colX - (vw + 3 + uw - 12) / 2;
             dc.setColor(SPORT_COLORS[i], Graphics.COLOR_TRANSPARENT);
-            dc.fillRectangle(x0 - 12, y(356), 6, 6);
-            drawBaseline(dc, x0, y(368), _numSmall, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
-            drawBaseline(dc, x0 + vw + 3, y(368), _label, unit, COLOR_FAINT, Graphics.TEXT_JUSTIFY_LEFT);
+            dc.fillRectangle(x0 - 12, y(330), 6, 6);
+            drawBaseline(dc, x0, y(342), _numSmall, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
+            drawBaseline(dc, x0 + vw + 3, y(342), _label, unit, COLOR_FAINT, Graphics.TEXT_JUSTIFY_LEFT);
         }
-        drawRuns(dc, y(402), [
+        drawRuns(dc, y(380), [
             [formatMinutes(_week.totalMinutes()), _numMedium, COLOR_INK, 2],
             ["/" + (targetMinutes() / 60).toString() + "H", _label, COLOR_FAINT, 0]
         ]);
@@ -192,13 +179,13 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         ];
         for (var i = 0; i < 3; i++) {
             var colX = _cx + (((i - 1) * 100) * _s).toNumber();
-            drawBaseline(dc, colX, y(114), _label, labels[i], COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
-            drawBaseline(dc, colX, y(144), _numLarge, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+            drawBaseline(dc, colX, y(80), _label, labels[i], COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
+            drawBaseline(dc, colX, y(110), _numLarge, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
         }
         if (hr != null) {
             var vw = dc.getTextWidthInPixels(values[0], _numLarge);
             dc.setColor(zoneColor(hr), Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(_cx - (100 * _s).toNumber() - vw / 2 - 10, y(134), 4);
+            dc.fillCircle(_cx - (100 * _s).toNumber() - vw / 2 - 10, y(100), 4);
         }
     }
 
@@ -206,16 +193,16 @@ class SplitDecisionsView extends WatchUi.WatchFace {
     private function drawWeekStrip(dc as Graphics.Dc) as Void {
         var plan = planText();
         if (plan != null) {
-            drawCentered(dc, y(174), _bold, plan, COLOR_INK);
+            drawCentered(dc, y(138), _bold, plan, COLOR_INK);
         }
         var todayIdx = TrainingWeek.todayIndex();
         for (var i = 0; i < 7; i++) {
             var lx = _cx + (((i - 3) * 26) * _s).toNumber();
             var color = i == todayIdx ? COLOR_ACCENT : (i > todayIdx ? COLOR_FAINT : COLOR_MUTED);
-            drawBaseline(dc, lx, y(198), _bold, WEEK_LETTERS[i], color, Graphics.TEXT_JUSTIFY_CENTER);
+            drawBaseline(dc, lx, y(160), _bold, WEEK_LETTERS[i], color, Graphics.TEXT_JUSTIFY_CENTER);
             if (i == todayIdx) {
                 dc.setColor(COLOR_ACCENT, Graphics.COLOR_TRANSPARENT);
-                dc.fillRectangle(lx - 7, y(203), 14, 2);
+                dc.fillRectangle(lx - 7, y(165), 14, 2);
             }
             var mask = _week.dayMask[i];
             var count = 0;
@@ -228,21 +215,22 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             for (var s = 0; s < 3; s++) {
                 if ((mask & (1 << s)) != 0) {
                     dc.setColor(SPORT_COLORS[s], Graphics.COLOR_TRANSPARENT);
-                    dc.fillRectangle(dx, y(209), 5, 5);
+                    dc.fillRectangle(dx, y(171), 5, 5);
                     dx += 7;
                 }
             }
         }
     }
 
-    // Segment time with faint unlit segments, amber seconds, and the two gauge readouts beside it.
+    // Segment time, dead center, with faint unlit segments. Amber seconds hang off the right,
+    // and the two side gauges' readouts sit either side.
     private function drawClock(dc as Graphics.Dc, clock as System.ClockTime, is24Hour as Boolean) as Void {
         var timeStr = hourText(clock.hour, is24Hour) + ":" + clock.min.format("%02d");
         var secStr = clock.sec.format("%02d");
-        var top = y(228);
+        var top = y(189);
         var tw = dc.getTextWidthInPixels(timeStr, _segTime);
         var sw = dc.getTextWidthInPixels(secStr, _segSecs);
-        var left = _cx - (tw + 10 + sw) / 2;
+        var left = _cx - tw / 2;
 
         drawTop(dc, left, top, _segTime, "88:88", COLOR_GHOST);
         drawTop(dc, left, top, _segTime, timeStr, COLOR_INK);
@@ -255,9 +243,9 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         var bb = bodyBattery();
         drawBaseline(dc, x(46), top + 40, _numMedium, bb == null ? "--" : bb.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
         drawBaseline(dc, x(46), top + 58, _label, "BB", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
-        var recovery = recoveryHours();
-        drawBaseline(dc, x(410), top + 40, _numMedium, recovery == null ? "--" : recovery.toString() + "H", COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
-        drawBaseline(dc, x(410), top + 58, _label, "REC", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
+        var daysLeft = daysUntil(Application.Properties.getValue("RaceDate"), Gregorian.info(Time.now(), Time.FORMAT_SHORT));
+        drawBaseline(dc, x(410), top + 40, _numMedium, daysLeft == null ? "--" : daysLeft.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, x(410), top + 58, _label, "DAYS", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
     }
 
     // Wrist down: dimmed time and date with the gauges, then every other row blacked out
@@ -265,7 +253,7 @@ class SplitDecisionsView extends WatchUi.WatchFace {
     private function drawAlwaysOn(dc as Graphics.Dc, clock as System.ClockTime) as Void {
         var timeStr = hourText(clock.hour, System.getDeviceSettings().is24Hour) + ":" + clock.min.format("%02d");
         var tw = dc.getTextWidthInPixels(timeStr, _segTime);
-        drawTop(dc, _cx - tw / 2, y(190), _segTime, timeStr, COLOR_MUTED);
+        drawTop(dc, _cx - tw / 2, y(189), _segTime, timeStr, COLOR_MUTED);
         drawCentered(dc, y(298), _bold, dateText(Gregorian.info(Time.now(), Time.FORMAT_SHORT)), COLOR_FAINT);
 
         if (dc has :setAntiAlias) {
@@ -317,12 +305,20 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         return null;
     }
 
-    private function recoveryHours() as Number? {
-        var info = ActivityMonitor.getInfo();
-        if ((info has :timeToRecovery) && info.timeToRecovery != null) {
-            return info.timeToRecovery;
+    // How far from plan start to race day, 0.0 to 1.0, or null if either date doesn't parse.
+    private function raceProgress() as Float? {
+        var today = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
+        var sinceStart = daysUntil(Application.Properties.getValue("PlanStart"), today);
+        var daysLeft = daysUntil(Application.Properties.getValue("RaceDate"), today);
+        if (sinceStart == null || daysLeft == null) {
+            return null;
         }
-        return null;
+        var span = daysLeft - sinceStart;
+        if (span <= 0) {
+            return null;
+        }
+        var done = 1.0 - daysLeft.toFloat() / span;
+        return done < 0.0 ? 0.0 : (done > 1.0 ? 1.0 : done);
     }
 
     private function temperature() as String {
