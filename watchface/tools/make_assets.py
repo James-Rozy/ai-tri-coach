@@ -32,9 +32,8 @@ TEXT_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 :,.%/-°"
 
 # id, source face, pixel size, characters
 TEXT_FONTS = [
-    ("num_large", ARCHIVO_BLACK, 30, NUMBER_CHARS),
-    ("num_medium", ARCHIVO_BLACK, 24, NUMBER_CHARS),
-    ("num_small", ARCHIVO_BLACK, 20, NUMBER_CHARS),
+    ("num_data", ARCHIVO_BLACK, 26, NUMBER_CHARS),    # every reading: HR, steps, weather, BB, days, week total
+    ("num_detail", ARCHIVO_BLACK, 20, NUMBER_CHARS),  # the per-sport distance breakdown
     ("mono_label", MONO_REGULAR, 14, TEXT_CHARS),
     ("mono_bold", MONO_SEMIBOLD, 14, TEXT_CHARS),
 ]

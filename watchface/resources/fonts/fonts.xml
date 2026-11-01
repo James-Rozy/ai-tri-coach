@@ -1,9 +1,8 @@
 <fonts>
     <font id="SegTime" filename="seg_time.fnt" antialias="true"/>
     <font id="SegSecs" filename="seg_secs.fnt" antialias="true"/>
-    <font id="NumLarge" filename="num_large.fnt" antialias="true"/>
-    <font id="NumMedium" filename="num_medium.fnt" antialias="true"/>
-    <font id="NumSmall" filename="num_small.fnt" antialias="true"/>
+    <font id="NumData" filename="num_data.fnt" antialias="true"/>
+    <font id="NumDetail" filename="num_detail.fnt" antialias="true"/>
     <font id="MonoLabel" filename="mono_label.fnt" antialias="true"/>
     <font id="MonoBold" filename="mono_bold.fnt" antialias="true"/>
 </fonts>

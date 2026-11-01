@@ -46,9 +46,9 @@ class SplitDecisionsView extends WatchUi.WatchFace {
 
     private var _segTime as WatchUi.FontResource;
     private var _segSecs as WatchUi.FontResource;
-    private var _numLarge as WatchUi.FontResource;
-    private var _numMedium as WatchUi.FontResource;
-    private var _numSmall as WatchUi.FontResource;
+    // Type scale: segment clock, _numData for every reading, _numDetail for the per-sport breakdown, mono 14 for labels and text.
+    private var _numData as WatchUi.FontResource;
+    private var _numDetail as WatchUi.FontResource;
     private var _label as WatchUi.FontResource;
     private var _bold as WatchUi.FontResource;
 
@@ -61,9 +61,8 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         WatchFace.initialize();
         _segTime = WatchUi.loadResource(Rez.Fonts.SegTime) as WatchUi.FontResource;
         _segSecs = WatchUi.loadResource(Rez.Fonts.SegSecs) as WatchUi.FontResource;
-        _numLarge = WatchUi.loadResource(Rez.Fonts.NumLarge) as WatchUi.FontResource;
-        _numMedium = WatchUi.loadResource(Rez.Fonts.NumMedium) as WatchUi.FontResource;
-        _numSmall = WatchUi.loadResource(Rez.Fonts.NumSmall) as WatchUi.FontResource;
+        _numData = WatchUi.loadResource(Rez.Fonts.NumData) as WatchUi.FontResource;
+        _numDetail = WatchUi.loadResource(Rez.Fonts.NumDetail) as WatchUi.FontResource;
         _label = WatchUi.loadResource(Rez.Fonts.MonoLabel) as WatchUi.FontResource;
         _bold = WatchUi.loadResource(Rez.Fonts.MonoBold) as WatchUi.FontResource;
         if (UserProfile has :getHeartRateZones) {
@@ -156,17 +155,17 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         for (var i = 0; i < 3; i++) {
             var value = distanceValue(i, statute);
             var unit = distanceUnit(i, statute);
-            var vw = dc.getTextWidthInPixels(value, _numSmall);
+            var vw = dc.getTextWidthInPixels(value, _numDetail);
             var uw = dc.getTextWidthInPixels(unit, _label);
             var colX = _cx + (((i - 1) * 86) * _s).toNumber();
             var x0 = colX - (vw + 3 + uw - 12) / 2;
             dc.setColor(SPORT_COLORS[i], Graphics.COLOR_TRANSPARENT);
             dc.fillRectangle(x0 - 12, y(346), 6, 6);
-            drawBaseline(dc, x0, y(358), _numSmall, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
+            drawBaseline(dc, x0, y(358), _numDetail, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
             drawBaseline(dc, x0 + vw + 3, y(358), _label, unit, COLOR_FAINT, Graphics.TEXT_JUSTIFY_LEFT);
         }
         drawRuns(dc, y(390), [
-            [formatMinutes(_week.totalMinutes()), _numMedium, COLOR_INK, 2],
+            [formatMinutes(_week.totalMinutes()), _numData, COLOR_INK, 2],
             ["/" + (targetMinutes() / 60).toString() + "H", _label, COLOR_FAINT, 0]
         ]);
     }
@@ -184,12 +183,12 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         for (var i = 0; i < 3; i++) {
             var colX = _cx + (((i - 1) * 100) * _s).toNumber();
             drawBaseline(dc, colX, y(80), _label, labels[i], COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
-            drawBaseline(dc, colX, y(110), _numLarge, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+            drawBaseline(dc, colX, y(108), _numData, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
         }
         if (hr != null) {
-            var vw = dc.getTextWidthInPixels(values[0], _numLarge);
+            var vw = dc.getTextWidthInPixels(values[0], _numData);
             dc.setColor(zoneColor(hr), Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(_cx - (100 * _s).toNumber() - vw / 2 - 10, y(100), 4);
+            dc.fillCircle(_cx - (100 * _s).toNumber() - vw / 2 - 10, y(99), 4);
         }
     }
 
@@ -241,10 +240,10 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         drawTop(dc, left + tw + 10, top + 46, _segSecs, secStr, COLOR_ACCENT);
 
         var bb = bodyBattery();
-        drawBaseline(dc, x(46), top + 40, _numMedium, bb == null ? "--" : bb.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, x(46), top + 40, _numData, bb == null ? "--" : bb.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
         drawBaseline(dc, x(46), top + 58, _label, "BB", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
         var daysLeft = daysUntil(Application.Properties.getValue("RaceDate"), Gregorian.info(Time.now(), Time.FORMAT_SHORT));
-        drawBaseline(dc, x(410), top + 40, _numMedium, daysLeft == null ? "--" : daysLeft.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, x(410), top + 40, _numData, daysLeft == null ? "--" : daysLeft.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
         drawBaseline(dc, x(410), top + 58, _label, "DAYS", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
     }
 
