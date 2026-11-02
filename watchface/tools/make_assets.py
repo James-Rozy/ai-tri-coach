@@ -63,11 +63,9 @@ def pack(glyphs):
     for g in glyphs:
         if g["w"] and g["h"]:
             alpha.paste(g["img"], (g["x"], g["y"]))
-    # Coverage goes in the color channels as well as alpha (white premultiplied onto black).
-    # The Connect IQ font compiler shades glyphs from the color, so white-everywhere RGB
-    # came out as hard, heavy 1-bit edges in the simulator.
-    sheet = Image.merge("RGBA", (alpha, alpha, alpha, alpha))
-    return sheet
+    # White glyphs on an opaque black sheet, no alpha channel. With a transparent sheet the
+    # Connect IQ font compiler drops the smoothing and glyphs come out with hard, heavy edges.
+    return Image.merge("RGB", (alpha, alpha, alpha))
 
 
 def write_font(name, face, size, line_height, base, glyphs):
@@ -199,13 +197,13 @@ def build_sport_icons():
                         w = e["w"] * k
                         draw.ellipse((cx - r - w / 2, cy - r - w / 2, cx + r + w / 2, cy + r + w / 2), outline=ink, width=round(w))
             alpha = mask.resize((size, size), Image.LANCZOS)
-            # Premultiplied onto black, like the fonts, so edges stay smooth even if alpha is thresholded.
+            # Opaque, blended onto black like the fonts, so the edges stay smooth. The face's
+            # background is black, so the square around each icon is invisible.
             r, g, b = SPORT_COLORS[key]
-            img = Image.merge("RGBA", (
+            img = Image.merge("RGB", (
                 alpha.point(lambda v: v * r // 255),
                 alpha.point(lambda v: v * g // 255),
                 alpha.point(lambda v: v * b // 255),
-                alpha,
             ))
             img.save(DRAW_OUT / f"icon_{key}_{suffix.lower()}.png")
 
