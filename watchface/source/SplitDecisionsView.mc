@@ -287,7 +287,9 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             }
             dc.drawBitmap(wx - sz(14), y(242), _wxIcon as WatchUi.BitmapResource);
         }
-        drawBaseline(dc, wx, y(300), _temp, temp, COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        // Center the digits on the column, letting the degree sign hang off to the right.
+        var degree = temp.find("°") != null ? dc.getTextWidthInPixels("°", _temp) : 0;
+        drawBaseline(dc, wx + degree / 2, y(300), _temp, temp, COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
     }
 
     // Garmin's 50-odd weather conditions, folded into seven icons.
