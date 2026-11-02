@@ -22,7 +22,7 @@ npm run build    # static output in dist/
 | `src/data/watchFaces.ts` | Every watch face on `/watch-faces/`. Flip `status` to `available` and add `storeUrl` when a store listing goes live. |
 | `src/data/season.ts` | The season phases drawn by `SeasonLine.astro`. |
 | `src/components/watchface/` | React island: the live SD Digital Tri preview, ported from the watch face mockup's canvas code. |
-| `src/components/Logo.astro` | The "fork" logo (S and D splitting at the decision point). `public/favicon.svg` is the same mark. |
+| `src/components/Logo.astro` | The LCD logo: "SD" in segment digits, same geometry as the watch face. `public/favicon.svg` is the same mark. |
 | `src/content/prompts/*.md` | One file per prompt. Frontmatter: `title`, `order`, `summary`, `useWhen`, `tier` (`free` or `paid`). Body is the prompt text. |
 | `src/styles/global.css` | Cascade layers, OKLCH tokens, swim/bike/run colors, the shared `.button`. |
 
