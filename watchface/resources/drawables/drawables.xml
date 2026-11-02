@@ -3,7 +3,6 @@
     <bitmap id="IconSwim" filename="icon_swim.png"/>
     <bitmap id="IconBike" filename="icon_bike.png"/>
     <bitmap id="IconRun" filename="icon_run.png"/>
-    <bitmap id="IconBodyBattery" filename="icon_body_battery.png"/>
     <bitmap id="IconSteps" filename="icon_steps.png"/>
     <bitmap id="IconTemp" filename="icon_temp.png"/>
     <bitmap id="IconHeart" filename="icon_heart.png"/>

@@ -170,7 +170,6 @@ ICONS = [
     ("swim", "icon_swim", 20, (0x2E, 0xA4, 0xDC)),
     ("bike", "icon_bike", 20, (0xF2, 0x8E, 0x42)),
     ("run", "icon_run", 20, (0x35, 0xC1, 0x77)),
-    ("bb", "icon_body_battery", 24, INK),
     ("steps", "icon_steps", 24, INK),
     ("temp", "icon_temp", 24, INK),
     ("hr", "icon_heart", 24, (0xE5, 0x48, 0x4D)),

@@ -4,7 +4,6 @@ import Toybox.Application;
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.Math;
-import Toybox.SensorHistory;
 import Toybox.System;
 import Toybox.Time;
 import Toybox.Time.Gregorian;
@@ -80,7 +79,6 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             WatchUi.loadResource(Rez.Drawables.IconRun) as WatchUi.BitmapResource
         ] as Array<WatchUi.BitmapResource>;
         _readoutIcons = [
-            WatchUi.loadResource(Rez.Drawables.IconBodyBattery) as WatchUi.BitmapResource,
             WatchUi.loadResource(Rez.Drawables.IconSteps) as WatchUi.BitmapResource,
             WatchUi.loadResource(Rez.Drawables.IconTemp) as WatchUi.BitmapResource,
             WatchUi.loadResource(Rez.Drawables.IconHeart) as WatchUi.BitmapResource
@@ -200,17 +198,16 @@ class SplitDecisionsView extends WatchUi.WatchFace {
     // One band under the heart rate gauge, spread wide: Body Battery, steps, weather, heart rate.
     // An icon sits over each number instead of a text label.
     private function drawReadouts(dc as Graphics.Dc) as Void {
-        var bb = bodyBattery();
         var hr = heartRate();
         var steps = ActivityMonitor.getInfo().steps;
-        var xs = [64, 170, 290, 390];
+        // Heart rate at 12 o'clock under the middle of its gauge, steps and weather out to either side.
+        var xs = [96, 358, 227];
         var values = [
-            bb == null ? "--" : bb.toString(),
             steps == null ? "--" : thousands(steps),
             temperature(),
             hr == null ? "--" : hr.toString()
         ];
-        for (var i = 0; i < 4; i++) {
+        for (var i = 0; i < 3; i++) {
             var px = x(xs[i]);
             dc.drawBitmap(px - 12, y(88), _readoutIcons[i]);
             drawBaseline(dc, px, y(148), _numData, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
@@ -281,21 +278,6 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             }
         }
         return ZONE_COLORS[4];
-    }
-
-    // Newest Body Battery reading. The latest sample is often empty, so walk back a few.
-    private function bodyBattery() as Number? {
-        if ((Toybox has :SensorHistory) && (SensorHistory has :getBodyBatteryHistory)) {
-            var history = SensorHistory.getBodyBatteryHistory({:period => 10, :order => SensorHistory.ORDER_NEWEST_FIRST});
-            var sample = history.next();
-            while (sample != null) {
-                if (sample.data != null) {
-                    return sample.data.toNumber();
-                }
-                sample = history.next();
-            }
-        }
-        return null;
     }
 
     // Where a heart rate sits on the top gauge, in clock degrees: resting HR at 315 (10:30),
