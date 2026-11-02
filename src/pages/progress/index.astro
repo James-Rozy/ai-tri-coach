@@ -148,6 +148,8 @@ const legPhotos = [
       font-size: var(--step--1);
     }
     .split { background: var(--surface); padding: 0.8rem; display: grid; gap: 0.2rem; border-block-start: 3px solid var(--leg); }
+    /* An odd leg out at the end (Run on a two-column phone grid) takes the full row instead of leaving a hole. */
+    .split:last-child:nth-child(odd) { grid-column: 1 / -1; }
     .split dt { text-transform: uppercase; color: var(--leg); font-weight: 600; }
     .split .time { font-size: var(--step-1); font-weight: 600; }
     .split .note { color: var(--ink-faint); font-size: 0.75rem; }
@@ -178,6 +180,7 @@ const legPhotos = [
       block-size: auto;
       aspect-ratio: 4 / 5;
       object-fit: cover;
+      object-position: 50% 15%;
       border-radius: var(--radius);
       border-block-end: 3px solid var(--leg);
       filter: saturate(0.85);

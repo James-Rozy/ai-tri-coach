@@ -33,7 +33,7 @@
     padding: 0.45em 1em;
     border-radius: 999px;
     cursor: pointer;
-    min-block-size: 2.25rem;
+    min-block-size: 44px;
   }
   .wf-modes button[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); }
 }
