@@ -2,12 +2,11 @@
 
 A Connect IQ watch face for the Garmin Fēnix 9 Pro 47mm (454×454 AMOLED), in the site's Race Timing look. The approved design is the [mockup](https://claude.ai/artifact/HjvifodYnxCwp42sEF1FZk); the code follows its pixel positions.
 
-**Three edge gauges**, one per third of the dial, flush with the bezel:
-- **Left (8 to 11 o'clock):** Body Battery, filling upward, with its number in the readout band at the gauge's midpoint.
-- **Right (1 to 4 o'clock):** heart rate, filling upward from your resting HR to your max in the current zone's color, with notches at the zone lines and BPM in the readout band at the gauge's midpoint. Zones and max come from your Garmin HR zones.
-- **Bottom (5 to 7 o'clock):** this week's training hours by sport (swim, bike, run colors), filling left to right toward your weekly target.
+**Two edge gauges**, facing each other and flush with the bezel:
+- **Top (10:30 to 1:30):** heart rate, filling left to right from your resting HR to your max in the current zone's color, with notches at the zone lines. Zones and max come from your Garmin HR zones.
+- **Bottom (7:30 to 4:30):** this week's training hours by sport (swim, bike, run colors), filling left to right toward your weekly target.
 
-**Center, top to bottom:** one readout band with an icon over each number (Body Battery and heart rate at their gauges' midpoints, steps and weather between), the segment clock dead center with amber seconds, the date, days to race day, swim/bike/run distance with sport icons, and the week total.
+**Center, top to bottom:** one readout band with an icon over each number (Body Battery, steps, weather, heart rate), a large segment clock dead center with amber seconds, the date, days to race day, swim/bike/run distance with sport icons, and the week total.
 
 **Always-on:** time (in the same centered spot), date and thin gauges only, dimmed. Every other pixel row is blacked out (alternating each minute) and the layout drifts a few pixels each minute, to stay inside Garmin's AMOLED burn-in rules.
 

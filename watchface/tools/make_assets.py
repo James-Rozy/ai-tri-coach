@@ -41,8 +41,8 @@ TEXT_FONTS = [
 
 # id, digit width, digit height, segment thickness (matches the mockup's segText calls)
 SEGMENT_FONTS = [
-    ("seg_time", 44, 76, 10),
-    ("seg_secs", 14, 30, 4),
+    ("seg_time", 54, 92, 12),
+    ("seg_secs", 16, 34, 4),
 ]
 
 SHEET_W = 512

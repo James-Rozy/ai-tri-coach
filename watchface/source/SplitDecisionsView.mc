@@ -128,36 +128,29 @@ class SplitDecisionsView extends WatchUi.WatchFace {
 
         drawReadouts(dc);
         drawClock(dc, clock, settings.is24Hour);
-        drawCentered(dc, y(304), _bold, dateText(Gregorian.info(Time.now(), Time.FORMAT_SHORT)), COLOR_MUTED);
+        drawCentered(dc, y(308), _bold, dateText(Gregorian.info(Time.now(), Time.FORMAT_SHORT)), COLOR_MUTED);
         var daysLeft = daysUntil(Application.Properties.getValue("RaceDate"), Gregorian.info(Time.now(), Time.FORMAT_SHORT));
         if (daysLeft != null && daysLeft >= 0) {
-            drawCentered(dc, y(334), _bold, daysLeft == 0 ? "RACE DAY" : daysLeft.toString() + (daysLeft == 1 ? " DAY" : " DAYS") + " TO RACE DAY", COLOR_INK);
+            drawCentered(dc, y(337), _bold, daysLeft == 0 ? "RACE DAY" : daysLeft.toString() + (daysLeft == 1 ? " DAY" : " DAYS") + " TO RACE DAY", COLOR_INK);
         }
         drawWeekSplits(dc);
     }
 
-    // Three gauges flush with the bezel (Body Battery, heart rate, week hours), one per third of the dial, with 30 degree gaps at 12, 4 and 8 o'clock.
+    // Two gauges flush with the bezel, facing each other: heart rate across the top, week hours across the bottom.
     private function drawGauges(dc as Graphics.Dc, aod as Boolean) as Void {
         var width = aod ? 3 : 6;
         if (!aod) {
-            drawClockArc(dc, 255.0, 345.0, COLOR_TRACK, width);
-            drawClockArc(dc, 105.0, 15.0, COLOR_TRACK, width);
+            drawClockArc(dc, 315.0, 405.0, COLOR_TRACK, width);
             drawClockArc(dc, 225.0, 135.0, COLOR_TRACK, width);
         }
 
-        // Left, 8 to 11 o'clock: Body Battery, filling upward.
-        var bb = bodyBattery();
-        if (bb != null) {
-            drawClockArc(dc, 255.0, 255.0 + 90.0 * bb / 100.0, COLOR_INK, width);
-        }
-
-        // Right, 1 to 4 o'clock: heart rate from resting to max, filling upward in the current zone's color,
+        // Top, 10:30 to 1:30: heart rate from resting to max, filling left to right in the current zone's color,
         // with notches cut at the zone lines.
         var hr = heartRate();
         if (hr != null) {
             var angle = hrAngle(hr);
             if (angle != null) {
-                drawClockArc(dc, 105.0, angle as Float, zoneColor(hr), width);
+                drawClockArc(dc, 315.0, angle as Float, zoneColor(hr), width);
             }
         }
         var zones = _hrZones;
@@ -165,7 +158,7 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             for (var z = 1; z < 5; z++) {
                 var notch = hrAngle(zones[z]);
                 if (notch != null) {
-                    drawClockArc(dc, (notch as Float) + 0.6, (notch as Float) - 0.6, COLOR_BG, width + 2);
+                    drawClockArc(dc, (notch as Float) - 0.6, (notch as Float) + 0.6, COLOR_BG, width + 2);
                 }
             }
         }
@@ -204,13 +197,13 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         ]);
     }
 
-    // One band across the top: Body Battery and heart rate at their gauges' midpoints (10 and 2 o'clock,
-    // radius 180), steps and weather between them. An icon sits over each number instead of a text label.
+    // One band under the heart rate gauge, spread wide: Body Battery, steps, weather, heart rate.
+    // An icon sits over each number instead of a text label.
     private function drawReadouts(dc as Graphics.Dc) as Void {
         var bb = bodyBattery();
         var hr = heartRate();
         var steps = ActivityMonitor.getInfo().steps;
-        var xs = [71, 172, 288, 383];
+        var xs = [64, 170, 290, 390];
         var values = [
             bb == null ? "--" : bb.toString(),
             steps == null ? "--" : thousands(steps),
@@ -219,8 +212,8 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         ];
         for (var i = 0; i < 4; i++) {
             var px = x(xs[i]);
-            dc.drawBitmap(px - 12, y(100), _readoutIcons[i]);
-            drawBaseline(dc, px, y(162), _numData, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+            dc.drawBitmap(px - 12, y(88), _readoutIcons[i]);
+            drawBaseline(dc, px, y(148), _numData, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
         }
     }
 
@@ -228,7 +221,7 @@ class SplitDecisionsView extends WatchUi.WatchFace {
     private function drawClock(dc as Graphics.Dc, clock as System.ClockTime, is24Hour as Boolean) as Void {
         var timeStr = hourText(clock.hour, is24Hour) + ":" + clock.min.format("%02d");
         var secStr = clock.sec.format("%02d");
-        var top = y(189);
+        var top = y(181);
         var tw = dc.getTextWidthInPixels(timeStr, _segTime);
         var sw = dc.getTextWidthInPixels(secStr, _segSecs);
         var left = _cx - tw / 2;
@@ -236,10 +229,10 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         drawTop(dc, left, top, _segTime, "88:88", COLOR_GHOST);
         drawTop(dc, left, top, _segTime, timeStr, COLOR_INK);
         if (!is24Hour) {
-            drawBaseline(dc, left + tw + 10 + sw / 2, top + 22, _label, clock.hour < 12 ? "AM" : "PM", COLOR_MUTED, Graphics.TEXT_JUSTIFY_CENTER);
+            drawBaseline(dc, left + tw + 10 + sw / 2, top + 28, _label, clock.hour < 12 ? "AM" : "PM", COLOR_MUTED, Graphics.TEXT_JUSTIFY_CENTER);
         }
-        drawTop(dc, left + tw + 10, top + 46, _segSecs, "88", COLOR_GHOST);
-        drawTop(dc, left + tw + 10, top + 46, _segSecs, secStr, COLOR_ACCENT);
+        drawTop(dc, left + tw + 10, top + 58, _segSecs, "88", COLOR_GHOST);
+        drawTop(dc, left + tw + 10, top + 58, _segSecs, secStr, COLOR_ACCENT);
 
     }
 
@@ -248,8 +241,8 @@ class SplitDecisionsView extends WatchUi.WatchFace {
     private function drawAlwaysOn(dc as Graphics.Dc, clock as System.ClockTime) as Void {
         var timeStr = hourText(clock.hour, System.getDeviceSettings().is24Hour) + ":" + clock.min.format("%02d");
         var tw = dc.getTextWidthInPixels(timeStr, _segTime);
-        drawTop(dc, _cx - tw / 2, y(189), _segTime, timeStr, COLOR_MUTED);
-        drawCentered(dc, y(304), _bold, dateText(Gregorian.info(Time.now(), Time.FORMAT_SHORT)), COLOR_FAINT);
+        drawTop(dc, _cx - tw / 2, y(181), _segTime, timeStr, COLOR_MUTED);
+        drawCentered(dc, y(308), _bold, dateText(Gregorian.info(Time.now(), Time.FORMAT_SHORT)), COLOR_FAINT);
 
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(false);
@@ -305,8 +298,8 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         return null;
     }
 
-    // Where a heart rate sits on the right gauge, in clock degrees: resting HR at 105 (4 o'clock),
-    // max HR at 15 (1 o'clock). Resting comes from the watch's profile, falling back to the zone 1 floor;
+    // Where a heart rate sits on the top gauge, in clock degrees: resting HR at 315 (10:30),
+    // max HR at 405 (1:30). Resting comes from the watch's profile, falling back to the zone 1 floor;
     // max is the top of the user's zones. Null when the watch has no zones.
     private function hrAngle(bpm as Number) as Float? {
         var zones = _hrZones;
@@ -324,7 +317,7 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         }
         var f = (bpm - floor).toFloat() / span;
         f = f < 0.0 ? 0.0 : (f > 1.0 ? 1.0 : f);
-        return 105.0 - 90.0 * f;
+        return 315.0 + 90.0 * f;
     }
 
     private function temperature() as String {
