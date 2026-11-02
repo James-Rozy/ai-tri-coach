@@ -17,7 +17,6 @@ const COLOR_INK = 0xF2F4F7;
 const COLOR_MUTED = 0xA9B2C0;
 const COLOR_FAINT = 0x7D8796;
 const COLOR_ACCENT = 0xFFB020;
-const COLOR_HOT = 0xE5484D;
 // Things that are off: status icons, the always-on panel outline.
 const COLOR_OFF = 0x2A313B;
 // The LCD panel: its fill, its border, and the unlit segments.
@@ -42,7 +41,6 @@ const AOD_SHIFTS = [[0, 0], [3, 2], [-2, 3], [-3, -2], [2, -3]];
 
 // Layout is designed on the 454px Fenix 9 Pro 47mm (see the mockup) and scaled from there.
 const DESIGN_SIZE = 454.0;
-const BEZEL_R = 221;
 const RING_R = 45;
 
 class SplitDecisionsView extends WatchUi.WatchFace {
@@ -59,11 +57,11 @@ class SplitDecisionsView extends WatchUi.WatchFace {
     private var _segAmPm as WatchUi.FontResource;
     // Everything else uses Garmin's built-in scalable fonts, which the watch draws smoothly at any size.
     // The bundled bitmap fonts are only a fallback.
-    private var _big as Graphics.FontType;    // 44 bold: days to race day
-    private var _row as Graphics.FontType;    // 24 bold: steps, battery, HR, temperature
-    private var _val as Graphics.FontType;    // 22 bold: distance in the sport rings
-    private var _bold as Graphics.FontType;   // 18 bold: ring times, wind, the race label
-    private var _small as Graphics.FontType;  // 15 regular: distance units
+    private var _big as Graphics.FontType;    // 48 bold: days to race day
+    private var _row as Graphics.FontType;    // 26 bold: steps, battery, HR, temperature
+    private var _val as Graphics.FontType;    // 24 bold: distance in the sport rings
+    private var _bold as Graphics.FontType;   // 20 bold: ring times, wind, the race label
+    private var _small as Graphics.FontType;  // 16 regular: distance units
 
     // True when the scalable fonts loaded, which curved text needs.
     private var _vector as Boolean = false;
@@ -87,11 +85,11 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         _segDate = WatchUi.loadResource(Rez.Fonts.SegDate) as WatchUi.FontResource;
         _segDay = WatchUi.loadResource(Rez.Fonts.SegDay) as WatchUi.FontResource;
         _segAmPm = WatchUi.loadResource(Rez.Fonts.SegAmPm) as WatchUi.FontResource;
-        _big = textFont(BOLD_FACES, 44, Rez.Fonts.NumData);
-        _row = textFont(BOLD_FACES, 24, Rez.Fonts.NumDetail);
-        _val = textFont(BOLD_FACES, 22, Rez.Fonts.NumDetail);
-        _bold = textFont(BOLD_FACES, 18, Rez.Fonts.MonoBold);
-        _small = textFont(REGULAR_FACES, 15, Rez.Fonts.MonoLabel);
+        _big = textFont(BOLD_FACES, 48, Rez.Fonts.NumData);
+        _row = textFont(BOLD_FACES, 26, Rez.Fonts.NumDetail);
+        _val = textFont(BOLD_FACES, 24, Rez.Fonts.NumDetail);
+        _bold = textFont(BOLD_FACES, 20, Rez.Fonts.MonoBold);
+        _small = textFont(REGULAR_FACES, 16, Rez.Fonts.MonoLabel);
         _sportIcons = [
             WatchUi.loadResource(Rez.Drawables.IconSwim) as WatchUi.BitmapResource,
             WatchUi.loadResource(Rez.Drawables.IconBike) as WatchUi.BitmapResource,
@@ -147,7 +145,6 @@ class SplitDecisionsView extends WatchUi.WatchFace {
 
         var conditions = (Toybox has :Weather) ? Weather.getCurrentConditions() : null;
         drawPanel(dc, clock, settings.is24Hour, aod);
-        drawTempGauge(dc, conditions, aod);
         if (aod) {
             drawStripes(dc, clock);
             return;
@@ -229,15 +226,15 @@ class SplitDecisionsView extends WatchUi.WatchFace {
                 drawArcAt(dc, rx, ry, sz(RING_R), 0.0, 360.0 * minutes / target, SPORT_COLORS[i], 6);
             }
 
-            dc.drawBitmap(rx - sz(10), y(70), _sportIcons[i]);
+            dc.drawBitmap(rx - sz(11), y(68), _sportIcons[i]);
             var value = distanceValue(i, statute);
             var unit = distanceUnit(i, statute);
             var vw = dc.getTextWidthInPixels(value, _val);
             var uw = dc.getTextWidthInPixels(unit, _small);
             var x0 = rx - (vw + 2 + uw) / 2;
-            drawBaseline(dc, x0, y(116), _val, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
-            drawBaseline(dc, x0 + vw + 2, y(116), _small, unit, COLOR_MUTED, Graphics.TEXT_JUSTIFY_LEFT);
-            drawBaseline(dc, rx, y(138), _bold, formatMinutes(minutes), COLOR_MUTED, Graphics.TEXT_JUSTIFY_CENTER);
+            drawBaseline(dc, x0, y(117), _val, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
+            drawBaseline(dc, x0 + vw + 2, y(117), _small, unit, COLOR_MUTED, Graphics.TEXT_JUSTIFY_LEFT);
+            drawBaseline(dc, rx, y(141), _bold, formatMinutes(minutes), COLOR_MUTED, Graphics.TEXT_JUSTIFY_CENTER);
         }
     }
 
@@ -246,15 +243,15 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         var dnd = (settings has :doNotDisturb) && settings.doNotDisturb;
         var on = [settings.phoneConnected, dnd, settings.alarmCount > 0];
         for (var i = 0; i < 3; i++) {
-            dc.drawBitmap(x(38), y(186 + i * 39), on[i] ? _statusOn[i] : _statusOff[i]);
+            dc.drawBitmap(x(35), y(183 + i * 40), on[i] ? _statusOn[i] : _statusOff[i]);
         }
     }
 
     // Wind dial (the arrow points where the wind is blowing) with its speed, then the temperature.
     private function drawWeather(dc as Graphics.Dc, conditions as Weather.CurrentConditions?, settings as System.DeviceSettings) as Void {
-        var wx = x(405);
-        var wy = y(200);
-        var wr = sz(17);
+        var wx = x(410);
+        var wy = y(198);
+        var wr = sz(20);
         dc.setColor(COLOR_MUTED, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(sz(2));
         dc.drawCircle(wx, wy, wr);
@@ -265,8 +262,8 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         if (conditions != null && conditions.windBearing != null) {
             // Weather reports where the wind comes from; the arrow shows where it's going.
             var a = Math.toRadians(((conditions.windBearing as Number) + 180) % 360);
-            var px = [0, 7, 0, -7] as Array<Number>;
-            var py = [-14, 8, 4, 8] as Array<Number>;
+            var px = [0, 8, 0, -8] as Array<Number>;
+            var py = [-17, 9, 5, 9] as Array<Number>;
             var poly = [];
             for (var i = 0; i < 4; i++) {
                 var ax = px[i] * _s;
@@ -280,37 +277,17 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             var ms = (conditions.windSpeed as Float).toFloat();
             windText = Math.round(statute ? ms * 2.23694 : ms * 3.6).toNumber().toString() + (statute ? " MPH" : " KMH");
         }
-        drawBaseline(dc, wx, y(240), _bold, windText, COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, wx, y(243), _bold, windText, COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
 
         var temp = temperature(conditions, settings);
         var tw = dc.getTextWidthInPixels(temp, _row);
-        var tx = wx - (sz(21) + tw) / 2;
-        dc.drawBitmap(tx, y(262), _icons[3]);
-        drawBaseline(dc, tx + sz(21), y(280), _row, temp, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
+        var tx = wx - (sz(23) + tw) / 2;
+        dc.drawBitmap(tx, y(264), _icons[3]);
+        drawBaseline(dc, tx + sz(23), y(284), _row, temp, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
     }
 
-    // Temperature on the right bezel, 4:30 up to 1:30, 0 to 100°F. Blue when cold, amber when mild, red when hot.
-    private function drawTempGauge(dc as Graphics.Dc, conditions as Weather.CurrentConditions?, aod as Boolean) as Void {
-        drawArcAt(dc, _cx, _cy, sz(BEZEL_R), 135.0, 45.0, aod ? COLOR_OFF : COLOR_TRACK, aod ? 3 : 6);
-        if (aod) {
-            return;
-        }
-        if (conditions != null && conditions.temperature != null) {
-            var f = (conditions.temperature as Numeric).toFloat() * 9 / 5 + 32;
-            var frac = f < 0 ? 0.0 : (f > 100 ? 1.0 : f / 100);
-            var color = f < 45 ? SPORT_COLORS[0] : (f <= 80 ? COLOR_ACCENT : COLOR_HOT);
-            drawArcAt(dc, _cx, _cy, sz(BEZEL_R), 135.0, 135.0 - 90.0 * frac, color, 6);
-        }
-        dc.setColor(COLOR_MUTED, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(sz(2));
-        var ends = [45.0, 135.0];
-        for (var i = 0; i < 2; i++) {
-            var t = Math.toRadians(ends[i] - 90);
-            dc.drawLine(_cx + sz(208) * Math.cos(t), _cy + sz(208) * Math.sin(t), _cx + sz(225) * Math.cos(t), _cy + sz(225) * Math.sin(t));
-        }
-    }
-
-    // Steps, watch battery and heart rate under the panel, an icon beside each number.
+    // Under the panel, an icon beside each number: steps centered across the panel's left half,
+    // battery and heart rate in a quarter each.
     private function drawReadouts(dc as Graphics.Dc) as Void {
         var steps = ActivityMonitor.getInfo().steps;
         var hr = heartRate();
@@ -319,11 +296,12 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             Math.round(System.getSystemStats().battery).toNumber().toString() + "%",
             hr == null ? "--" : hr.toString()
         ];
+        var centers = [148, 259, 333];
         for (var i = 0; i < 3; i++) {
             var vw = dc.getTextWidthInPixels(values[i], _row);
-            var x0 = x(127 + i * 100) - (sz(25) + vw) / 2;
+            var x0 = x(centers[i]) - (sz(27) + vw) / 2;
             dc.drawBitmap(x0, y(324), _icons[i]);
-            drawBaseline(dc, x0 + sz(25), y(342), _row, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
+            drawBaseline(dc, x0 + sz(27), y(344), _row, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
         }
     }
 
@@ -336,10 +314,10 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         var labelSetting = Application.Properties.getValue("RaceLabel");
         var label = (labelSetting instanceof String && labelSetting.length() > 0) ? labelSetting.toUpper() : "RACE";
         var text = daysLeft == 0 ? "IT'S RACE DAY" : (daysLeft == 1 ? "DAY" : "DAYS") + " UNTIL " + label;
-        drawBaseline(dc, _cx, y(398), _big, daysLeft.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, _cx, y(400), _big, daysLeft.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
         if ((dc has :drawRadialText) && _vector) {
             dc.setColor(COLOR_MUTED, Graphics.COLOR_TRANSPARENT);
-            dc.drawRadialText(_cx, _cy, _bold, text, Graphics.TEXT_JUSTIFY_CENTER, 270, sz(206),
+            dc.drawRadialText(_cx, _cy, _bold, text, Graphics.TEXT_JUSTIFY_CENTER, 270, sz(208),
                 Graphics.RADIAL_TEXT_DIRECTION_COUNTER_CLOCKWISE);
         } else {
             drawBaseline(dc, _cx, y(424), _bold, text, COLOR_MUTED, Graphics.TEXT_JUSTIFY_CENTER);

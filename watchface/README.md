@@ -5,8 +5,8 @@ A Connect IQ watch face for the Garmin Fēnix 9 Pro 47mm (454×454 AMOLED), laid
 - **LCD panel (center):** a bordered panel with the day of the week and the date (month-day) on top, then the time, AM/PM and amber seconds. Unlit segments show faintly behind the digits.
 - **Sport rings (top):** swim, bike and run. Each ring fills from 12 o'clock toward that sport's weekly time target. Inside are the icon, the week's distance and the week's time.
 - **Left:** phone connected, do not disturb, alarm set. Lit when on, faint when off.
-- **Right:** a wind dial (the arrow points where the wind is blowing) with its speed, the temperature, and a bezel gauge from 4:30 to 1:30 that fills with the temperature (0 to 100°F): blue when it's cold, amber when it's mild, red when it's hot.
-- **Under the panel:** steps, watch battery, heart rate.
+- **Right:** a wind dial (the arrow points where the wind is blowing) with its speed, then the temperature.
+- **Under the panel:** steps across the left half of the panel's width, then watch battery and heart rate in a quarter each.
 - **Bottom bezel:** days to race day, with "DAYS UNTIL RACE" curved along the bezel. The word after "DAYS UNTIL" is a setting.
 
 **Always-on:** the panel outline, the time and the date only, dimmed. Every other pixel row is blacked out (alternating each minute) and the layout drifts a few pixels each minute, to stay inside Garmin's AMOLED burn-in rules.

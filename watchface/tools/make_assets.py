@@ -194,20 +194,20 @@ def build_segment_font(name, w, h, t, chars):
 SPORT_ICONS = Path(__file__).resolve().parent / "sport_icons.json"
 OFF = (0x2A, 0x31, 0x3B)
 ICONS = [
-    ("swim", "icon_swim", 20, (0x2E, 0xA4, 0xDC)),
-    ("bike", "icon_bike", 20, (0xF2, 0x8E, 0x42)),
-    ("run", "icon_run", 20, (0x35, 0xC1, 0x77)),
-    ("steps", "icon_steps", 20, INK),
-    ("battery", "icon_battery", 20, INK),
-    ("hr", "icon_heart", 20, (0xE5, 0x48, 0x4D)),
-    ("temp", "icon_temp", 18, INK),
+    ("swim", "icon_swim", 22, (0x2E, 0xA4, 0xDC)),
+    ("bike", "icon_bike", 22, (0xF2, 0x8E, 0x42)),
+    ("run", "icon_run", 22, (0x35, 0xC1, 0x77)),
+    ("steps", "icon_steps", 22, INK),
+    ("battery", "icon_battery", 22, INK),
+    ("hr", "icon_heart", 22, (0xE5, 0x48, 0x4D)),
+    ("temp", "icon_temp", 20, INK),
     # Status icons: lit when on, a faint copy when off.
-    ("bt", "icon_bt", 24, INK),
-    ("bt", "icon_bt_off", 24, OFF),
-    ("dnd", "icon_dnd", 24, INK),
-    ("dnd", "icon_dnd_off", 24, OFF),
-    ("alarm", "icon_alarm", 24, INK),
-    ("alarm", "icon_alarm_off", 24, OFF),
+    ("bt", "icon_bt", 28, INK),
+    ("bt", "icon_bt_off", 28, OFF),
+    ("dnd", "icon_dnd", 28, INK),
+    ("dnd", "icon_dnd_off", 28, OFF),
+    ("alarm", "icon_alarm", 28, INK),
+    ("alarm", "icon_alarm_off", 28, OFF),
 ]
 ICON_SS = 8
 
