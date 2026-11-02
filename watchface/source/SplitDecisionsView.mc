@@ -126,10 +126,9 @@ class SplitDecisionsView extends WatchUi.WatchFace {
 
         drawReadouts(dc);
         drawClock(dc, clock, settings.is24Hour);
-        drawCentered(dc, y(308), _bold, dateText(Gregorian.info(Time.now(), Time.FORMAT_SHORT)), COLOR_MUTED);
         var daysLeft = daysUntil(Application.Properties.getValue("RaceDate"), Gregorian.info(Time.now(), Time.FORMAT_SHORT));
         if (daysLeft != null && daysLeft >= 0) {
-            drawCentered(dc, y(337), _bold, daysLeft == 0 ? "RACE DAY" : daysLeft.toString() + (daysLeft == 1 ? " DAY" : " DAYS") + " TO RACE DAY", COLOR_INK);
+            drawCentered(dc, y(316), _bold, daysLeft == 0 ? "RACE DAY" : daysLeft.toString() + (daysLeft == 1 ? " DAY" : " DAYS") + " TO RACE DAY", COLOR_INK);
         }
         drawWeekSplits(dc);
     }
@@ -200,14 +199,16 @@ class SplitDecisionsView extends WatchUi.WatchFace {
     private function drawReadouts(dc as Graphics.Dc) as Void {
         var hr = heartRate();
         var steps = ActivityMonitor.getInfo().steps;
-        // Heart rate at 12 o'clock under the middle of its gauge, steps and weather out to either side.
-        var xs = [96, 358, 227];
-        var values = [
-            steps == null ? "--" : thousands(steps),
-            temperature(),
-            hr == null ? "--" : hr.toString()
-        ];
-        for (var i = 0; i < 3; i++) {
+        // Heart rate tucked up under the middle of its gauge, the heart beside the number.
+        var hrStr = hr == null ? "--" : hr.toString();
+        var hx = _cx - ((30 * _s).toNumber() + dc.getTextWidthInPixels(hrStr, _numData)) / 2;
+        dc.drawBitmap(hx, y(44), _readoutIcons[2]);
+        drawBaseline(dc, hx + (30 * _s).toNumber(), y(70), _numData, hrStr, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
+
+        // Steps and weather out to the sides, an icon over each number.
+        var xs = [96, 358];
+        var values = [steps == null ? "--" : thousands(steps), temperature()];
+        for (var i = 0; i < 2; i++) {
             var px = x(xs[i]);
             dc.drawBitmap(px - 12, y(88), _readoutIcons[i]);
             drawBaseline(dc, px, y(148), _numData, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
@@ -221,8 +222,10 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         var top = y(181);
         var tw = dc.getTextWidthInPixels(timeStr, _segTime);
         var sw = dc.getTextWidthInPixels(secStr, _segSecs);
-        var left = _cx - tw / 2;
+        // Nudged right of center so the stacked date fits on its left.
+        var left = _cx - tw / 2 + (24 * _s).toNumber();
 
+        drawDate(dc, left, COLOR_MUTED, COLOR_INK);
         drawTop(dc, left, top, _segTime, "88:88", COLOR_GHOST);
         drawTop(dc, left, top, _segTime, timeStr, COLOR_INK);
         if (!is24Hour) {
@@ -238,8 +241,9 @@ class SplitDecisionsView extends WatchUi.WatchFace {
     private function drawAlwaysOn(dc as Graphics.Dc, clock as System.ClockTime) as Void {
         var timeStr = hourText(clock.hour, System.getDeviceSettings().is24Hour) + ":" + clock.min.format("%02d");
         var tw = dc.getTextWidthInPixels(timeStr, _segTime);
-        drawTop(dc, _cx - tw / 2, y(181), _segTime, timeStr, COLOR_MUTED);
-        drawCentered(dc, y(308), _bold, dateText(Gregorian.info(Time.now(), Time.FORMAT_SHORT)), COLOR_FAINT);
+        var left = _cx - tw / 2 + (24 * _s).toNumber();
+        drawTop(dc, left, y(181), _segTime, timeStr, COLOR_MUTED);
+        drawDate(dc, left, COLOR_FAINT, COLOR_FAINT);
 
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(false);
@@ -364,9 +368,13 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         return statute ? "MI" : "KM";
     }
 
-    private function dateText(today as Gregorian.Info) as String {
-        return DAY_NAMES[(today.day_of_week as Number) - 1] + " " + (today.day as Number).format("%02d") + " "
-            + MONTH_NAMES[(today.month as Number) - 1];
+    // Day of the week stacked over month and day, right-aligned just left of the time.
+    private function drawDate(dc as Graphics.Dc, timeLeft as Number, dayColor as Number, dateColor as Number) as Void {
+        var today = Gregorian.info(Time.now(), Time.FORMAT_SHORT);
+        var right = timeLeft - (12 * _s).toNumber();
+        drawBaseline(dc, right, y(219), _bold, DAY_NAMES[(today.day_of_week as Number) - 1], dayColor, Graphics.TEXT_JUSTIFY_RIGHT);
+        drawBaseline(dc, right, y(247), _bold, MONTH_NAMES[(today.month as Number) - 1] + " " + (today.day as Number).toString(),
+            dateColor, Graphics.TEXT_JUSTIFY_RIGHT);
     }
 
     private function hourText(hour as Number, is24Hour as Boolean) as String {

@@ -6,9 +6,9 @@ A Connect IQ watch face for the Garmin Fēnix 9 Pro 47mm (454×454 AMOLED), in t
 - **Top (10:30 to 1:30):** heart rate, filling left to right from your resting HR to your max in the current zone's color, with notches at the zone lines. Zones and max come from your Garmin HR zones.
 - **Bottom (7:30 to 4:30):** this week's training hours by sport (swim, bike, run colors), filling left to right toward your weekly target.
 
-**Center, top to bottom:** one readout band with an icon over each number (heart rate at 12 o'clock under its gauge, steps to the left, weather to the right), a large segment clock dead center with amber seconds, the date, days to race day, swim/bike/run distance with sport icons, and the week total.
+**Center, top to bottom:** heart rate tucked into the top gauge at 12 o'clock, steps and weather to either side with an icon over each, a large segment clock with amber seconds and the date stacked on its left (day over month and day), days to race day, swim/bike/run distance with sport icons, and the week total.
 
-**Always-on:** time (in the same centered spot), date and thin gauges only, dimmed. Every other pixel row is blacked out (alternating each minute) and the layout drifts a few pixels each minute, to stay inside Garmin's AMOLED burn-in rules.
+**Always-on:** time and date (in the same spot) and thin gauges only, dimmed. Every other pixel row is blacked out (alternating each minute) and the layout drifts a few pixels each minute, to stay inside Garmin's AMOLED burn-in rules.
 
 The weekly numbers come from activities recorded on the watch since Monday. Anything logged elsewhere, like polo added by hand on Strava, won't count.
 
