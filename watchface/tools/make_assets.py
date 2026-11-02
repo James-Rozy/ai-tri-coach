@@ -200,7 +200,14 @@ ICONS = [
     ("steps", "icon_steps", 24, INK),
     ("battery", "icon_battery", 24, INK),
     ("hr", "icon_heart", 24, (0xE5, 0x48, 0x4D)),
-    ("temp", "icon_temp", 22, INK),
+    # Current conditions, over the temperature.
+    ("wx_clear", "icon_wx_clear", 28, INK),
+    ("wx_partly", "icon_wx_partly", 28, INK),
+    ("wx_cloudy", "icon_wx_cloudy", 28, INK),
+    ("wx_rain", "icon_wx_rain", 28, INK),
+    ("wx_snow", "icon_wx_snow", 28, INK),
+    ("wx_thunder", "icon_wx_thunder", 28, INK),
+    ("wx_fog", "icon_wx_fog", 28, INK),
     # Status icons: lit when on, a faint copy when off.
     ("bt", "icon_bt", 30, INK),
     ("bt", "icon_bt_off", 30, OFF),

@@ -36,9 +36,6 @@ const DAY_NAMES = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const BOLD_FACES = ["RobotoCondensedBold", "Swiss721Bold", "BionicBold"];
 const REGULAR_FACES = ["RobotoCondensedRegular", "Swiss721Regular", "RobotoCondensedBold"];
 
-// Always-on drift, one step per minute, so no pixel stays lit in one place.
-const AOD_SHIFTS = [[0, 0], [3, 2], [-2, 3], [-3, -2], [2, -3]];
-
 // Layout is designed on the 454px Fenix 9 Pro 47mm (see the mockup) and scaled from there.
 const DESIGN_SIZE = 454.0;
 const RING_R = 50;
@@ -68,8 +65,11 @@ class SplitDecisionsView extends WatchUi.WatchFace {
     private var _vector as Boolean = false;
 
     private var _sportIcons as Array<WatchUi.BitmapResource>;
-    // Steps, battery, heart, thermometer.
+    // Steps, battery, heart.
     private var _icons as Array<WatchUi.BitmapResource>;
+    // The current conditions icon, reloaded only when the condition changes.
+    private var _wxCondition as Number = -1;
+    private var _wxIcon as WatchUi.BitmapResource? = null;
     // Phone, do not disturb, alarm: lit, then off.
     private var _statusOn as Array<WatchUi.BitmapResource>;
     private var _statusOff as Array<WatchUi.BitmapResource>;
@@ -100,8 +100,7 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         _icons = [
             WatchUi.loadResource(Rez.Drawables.IconSteps) as WatchUi.BitmapResource,
             WatchUi.loadResource(Rez.Drawables.IconBattery) as WatchUi.BitmapResource,
-            WatchUi.loadResource(Rez.Drawables.IconHeart) as WatchUi.BitmapResource,
-            WatchUi.loadResource(Rez.Drawables.IconTemp) as WatchUi.BitmapResource
+            WatchUi.loadResource(Rez.Drawables.IconHeart) as WatchUi.BitmapResource
         ] as Array<WatchUi.BitmapResource>;
         _statusOn = [
             WatchUi.loadResource(Rez.Drawables.IconBt) as WatchUi.BitmapResource,
@@ -133,11 +132,8 @@ class SplitDecisionsView extends WatchUi.WatchFace {
 
         _cx = w / 2;
         _cy = h / 2;
-        if (aod) {
-            var shift = AOD_SHIFTS[clock.min % AOD_SHIFTS.size()] as Array<Number>;
-            _cx += shift[0];
-            _cy += shift[1];
-        }
+        // No always-on drift: the stripes alternate every minute, so no pixel stays lit longer than that,
+        // and the time stays in exactly the same spot when the watch wakes.
 
         dc.setColor(COLOR_BG, COLOR_BG);
         dc.clear();
@@ -249,10 +245,11 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         }
     }
 
-    // Wind dial (the arrow points where the wind is blowing) with its speed, then the temperature.
+    // Wind dial (the arrow points where the wind is blowing) with its speed, then the current
+    // conditions over the temperature.
     private function drawWeather(dc as Graphics.Dc, conditions as Weather.CurrentConditions?, settings as System.DeviceSettings) as Void {
         var wx = x(410);
-        var wy = y(194);
+        var wy = y(184);
         var wr = sz(21);
         dc.setColor(COLOR_MUTED, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(sz(2));
@@ -279,13 +276,82 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             var ms = (conditions.windSpeed as Float).toFloat();
             windText = Math.round(statute ? ms * 2.23694 : ms * 3.6).toNumber().toString() + (statute ? " MPH" : " KMH");
         }
-        drawBaseline(dc, wx, y(242), _bold, windText, COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, wx, y(230), _bold, windText, COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
 
         var temp = temperature(conditions, settings);
-        var tw = dc.getTextWidthInPixels(temp, _temp);
-        var tx = x(408) - (sz(25) + tw) / 2;
-        dc.drawBitmap(tx, y(263), _icons[3]);
-        drawBaseline(dc, tx + sz(25), y(286), _temp, temp, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
+        if (conditions != null && conditions.condition != null) {
+            var condition = conditions.condition as Number;
+            if (condition != _wxCondition || _wxIcon == null) {
+                _wxIcon = WatchUi.loadResource(conditionIcon(condition)) as WatchUi.BitmapResource;
+                _wxCondition = condition;
+            }
+            dc.drawBitmap(wx - sz(14), y(242), _wxIcon as WatchUi.BitmapResource);
+        }
+        drawBaseline(dc, wx, y(300), _temp, temp, COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+    }
+
+    // Garmin's 50-odd weather conditions, folded into seven icons.
+    private function conditionIcon(c as Number) as ResourceId {
+        switch (c) {
+            case Weather.CONDITION_CLEAR:
+            case Weather.CONDITION_FAIR:
+            case Weather.CONDITION_MOSTLY_CLEAR:
+                return Rez.Drawables.IconWxClear;
+            case Weather.CONDITION_PARTLY_CLOUDY:
+            case Weather.CONDITION_PARTLY_CLEAR:
+            case Weather.CONDITION_THIN_CLOUDS:
+                return Rez.Drawables.IconWxPartly;
+            case Weather.CONDITION_RAIN:
+            case Weather.CONDITION_SCATTERED_SHOWERS:
+            case Weather.CONDITION_UNKNOWN_PRECIPITATION:
+            case Weather.CONDITION_LIGHT_RAIN:
+            case Weather.CONDITION_HEAVY_RAIN:
+            case Weather.CONDITION_LIGHT_SHOWERS:
+            case Weather.CONDITION_SHOWERS:
+            case Weather.CONDITION_HEAVY_SHOWERS:
+            case Weather.CONDITION_CHANCE_OF_SHOWERS:
+            case Weather.CONDITION_DRIZZLE:
+            case Weather.CONDITION_CLOUDY_CHANCE_OF_RAIN:
+            case Weather.CONDITION_FREEZING_RAIN:
+                return Rez.Drawables.IconWxRain;
+            case Weather.CONDITION_SNOW:
+            case Weather.CONDITION_WINTRY_MIX:
+            case Weather.CONDITION_HAIL:
+            case Weather.CONDITION_LIGHT_SNOW:
+            case Weather.CONDITION_HEAVY_SNOW:
+            case Weather.CONDITION_LIGHT_RAIN_SNOW:
+            case Weather.CONDITION_HEAVY_RAIN_SNOW:
+            case Weather.CONDITION_RAIN_SNOW:
+            case Weather.CONDITION_ICE:
+            case Weather.CONDITION_CHANCE_OF_SNOW:
+            case Weather.CONDITION_CHANCE_OF_RAIN_SNOW:
+            case Weather.CONDITION_CLOUDY_CHANCE_OF_SNOW:
+            case Weather.CONDITION_CLOUDY_CHANCE_OF_RAIN_SNOW:
+            case Weather.CONDITION_FLURRIES:
+            case Weather.CONDITION_SLEET:
+            case Weather.CONDITION_ICE_SNOW:
+                return Rez.Drawables.IconWxSnow;
+            case Weather.CONDITION_THUNDERSTORMS:
+            case Weather.CONDITION_SCATTERED_THUNDERSTORMS:
+            case Weather.CONDITION_CHANCE_OF_THUNDERSTORMS:
+            case Weather.CONDITION_TORNADO:
+            case Weather.CONDITION_SQUALL:
+            case Weather.CONDITION_HURRICANE:
+            case Weather.CONDITION_TROPICAL_STORM:
+                return Rez.Drawables.IconWxThunder;
+            case Weather.CONDITION_FOG:
+            case Weather.CONDITION_HAZY:
+            case Weather.CONDITION_MIST:
+            case Weather.CONDITION_DUST:
+            case Weather.CONDITION_SMOKE:
+            case Weather.CONDITION_SAND:
+            case Weather.CONDITION_SANDSTORM:
+            case Weather.CONDITION_VOLCANIC_ASH:
+            case Weather.CONDITION_HAZE:
+                return Rez.Drawables.IconWxFog;
+        }
+        // Cloudy, windy and anything unknown.
+        return Rez.Drawables.IconWxCloudy;
     }
 
     // Under the panel, an icon beside each number: steps from the panel's left edge across its left half,
@@ -301,8 +367,11 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         for (var i = 0; i < 3; i++) {
             var vw = dc.getTextWidthInPixels(values[i], _row);
             var x0 = i == 0 ? x(74) : (i == 1 ? x(227) : x(370) - sz(28) - vw);
-            dc.drawBitmap(x0, y(330), _icons[i]);
-            drawBaseline(dc, x0 + sz(28), y(352), _row, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
+            // Icon and number share one center line. VCENTER centers the font's box, which for
+            // Roboto lands within a pixel of the digits' middle, whatever ascent the font reports.
+            dc.drawBitmap(x0, y(342) - sz(12), _icons[i]);
+            dc.setColor(COLOR_INK, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(x0 + sz(28), y(342), _row, values[i], Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
         }
     }
 

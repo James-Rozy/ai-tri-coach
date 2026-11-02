@@ -6,7 +6,13 @@
     <bitmap id="IconSteps" filename="icon_steps.png"/>
     <bitmap id="IconBattery" filename="icon_battery.png"/>
     <bitmap id="IconHeart" filename="icon_heart.png"/>
-    <bitmap id="IconTemp" filename="icon_temp.png"/>
+    <bitmap id="IconWxClear" filename="icon_wx_clear.png"/>
+    <bitmap id="IconWxPartly" filename="icon_wx_partly.png"/>
+    <bitmap id="IconWxCloudy" filename="icon_wx_cloudy.png"/>
+    <bitmap id="IconWxRain" filename="icon_wx_rain.png"/>
+    <bitmap id="IconWxSnow" filename="icon_wx_snow.png"/>
+    <bitmap id="IconWxThunder" filename="icon_wx_thunder.png"/>
+    <bitmap id="IconWxFog" filename="icon_wx_fog.png"/>
     <bitmap id="IconBt" filename="icon_bt.png"/>
     <bitmap id="IconBtOff" filename="icon_bt_off.png"/>
     <bitmap id="IconDnd" filename="icon_dnd.png"/>
