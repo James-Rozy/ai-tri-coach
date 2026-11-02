@@ -28,7 +28,6 @@ const ZONE_COLORS = [0x7D8796, 0x2EA4DC, 0x35C177, 0xF28E42, 0xE5484D];
 
 const DAY_NAMES = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const MONTH_NAMES = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-const WEEK_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
 
 // Garmin's built-in scalable font faces, first match wins. Condensed to match the race-board look.
 const BOLD_FACES = ["RobotoCondensedBold", "Swiss721Bold", "BionicBold"];
@@ -57,9 +56,10 @@ class SplitDecisionsView extends WatchUi.WatchFace {
     private var _numDetail as Graphics.FontType;
     private var _label as Graphics.FontType;
     private var _bold as Graphics.FontType;
-    // Swim, bike, run icons: large for the distance row, small for the week strip.
-    private var _iconsLarge as Array<WatchUi.BitmapResource>;
-    private var _iconsSmall as Array<WatchUi.BitmapResource>;
+    // Swim, bike, run icons for the distance row.
+    private var _sportIcons as Array<WatchUi.BitmapResource>;
+    // Body Battery, steps, weather and heart rate icons for the readout band.
+    private var _readoutIcons as Array<WatchUi.BitmapResource>;
 
     // Set at the top of each onUpdate.
     private var _cx as Number = 227;
@@ -70,19 +70,20 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         WatchFace.initialize();
         _segTime = WatchUi.loadResource(Rez.Fonts.SegTime) as WatchUi.FontResource;
         _segSecs = WatchUi.loadResource(Rez.Fonts.SegSecs) as WatchUi.FontResource;
-        _numData = textFont(BOLD_FACES, 34, Rez.Fonts.NumData);
+        _numData = textFont(BOLD_FACES, 40, Rez.Fonts.NumData);
         _numDetail = textFont(BOLD_FACES, 24, Rez.Fonts.NumDetail);
         _label = textFont(REGULAR_FACES, 18, Rez.Fonts.MonoLabel);
-        _bold = textFont(BOLD_FACES, 20, Rez.Fonts.MonoBold);
-        _iconsLarge = [
-            WatchUi.loadResource(Rez.Drawables.SwimLarge) as WatchUi.BitmapResource,
-            WatchUi.loadResource(Rez.Drawables.BikeLarge) as WatchUi.BitmapResource,
-            WatchUi.loadResource(Rez.Drawables.RunLarge) as WatchUi.BitmapResource
+        _bold = textFont(BOLD_FACES, 22, Rez.Fonts.MonoBold);
+        _sportIcons = [
+            WatchUi.loadResource(Rez.Drawables.IconSwim) as WatchUi.BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.IconBike) as WatchUi.BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.IconRun) as WatchUi.BitmapResource
         ] as Array<WatchUi.BitmapResource>;
-        _iconsSmall = [
-            WatchUi.loadResource(Rez.Drawables.SwimSmall) as WatchUi.BitmapResource,
-            WatchUi.loadResource(Rez.Drawables.BikeSmall) as WatchUi.BitmapResource,
-            WatchUi.loadResource(Rez.Drawables.RunSmall) as WatchUi.BitmapResource
+        _readoutIcons = [
+            WatchUi.loadResource(Rez.Drawables.IconBodyBattery) as WatchUi.BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.IconSteps) as WatchUi.BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.IconTemp) as WatchUi.BitmapResource,
+            WatchUi.loadResource(Rez.Drawables.IconHeart) as WatchUi.BitmapResource
         ] as Array<WatchUi.BitmapResource>;
         if (UserProfile has :getHeartRateZones) {
             _hrZones = UserProfile.getHeartRateZones(UserProfile.HR_ZONE_SPORT_GENERIC);
@@ -125,13 +126,12 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             return;
         }
 
-        drawTopRow(dc);
-        drawWeekStrip(dc);
+        drawReadouts(dc);
         drawClock(dc, clock, settings.is24Hour);
-        drawCentered(dc, y(300), _bold, dateText(Gregorian.info(Time.now(), Time.FORMAT_SHORT)), COLOR_MUTED);
+        drawCentered(dc, y(304), _bold, dateText(Gregorian.info(Time.now(), Time.FORMAT_SHORT)), COLOR_MUTED);
         var daysLeft = daysUntil(Application.Properties.getValue("RaceDate"), Gregorian.info(Time.now(), Time.FORMAT_SHORT));
         if (daysLeft != null && daysLeft >= 0) {
-            drawCentered(dc, y(328), _bold, daysLeft == 0 ? "RACE DAY" : daysLeft.toString() + (daysLeft == 1 ? " DAY" : " DAYS") + " TO RACE DAY", COLOR_INK);
+            drawCentered(dc, y(334), _bold, daysLeft == 0 ? "RACE DAY" : daysLeft.toString() + (daysLeft == 1 ? " DAY" : " DAYS") + " TO RACE DAY", COLOR_INK);
         }
         drawWeekSplits(dc);
     }
@@ -192,60 +192,39 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             var unit = distanceUnit(i, statute);
             var vw = dc.getTextWidthInPixels(value, _numDetail);
             var uw = dc.getTextWidthInPixels(unit, _label);
-            var colX = _cx + (((i - 1) * 112) * _s).toNumber();
-            var x0 = colX - (vw + 3 + uw - 22) / 2;
-            dc.drawBitmap(x0 - 22, y(356), _iconsLarge[i]);
-            drawBaseline(dc, x0, y(374), _numDetail, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
-            drawBaseline(dc, x0 + vw + 3, y(374), _label, unit, COLOR_FAINT, Graphics.TEXT_JUSTIFY_LEFT);
+            var colX = _cx + (((i - 1) * 114) * _s).toNumber();
+            var x0 = colX - (vw + 3 + uw - 24) / 2;
+            dc.drawBitmap(x0 - 24, y(354), _sportIcons[i]);
+            drawBaseline(dc, x0, y(373), _numDetail, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
+            drawBaseline(dc, x0 + vw + 3, y(373), _label, unit, COLOR_MUTED, Graphics.TEXT_JUSTIFY_LEFT);
         }
-        drawRuns(dc, y(412), [
+        drawRuns(dc, y(418), [
             [formatMinutes(_week.totalMinutes()), _numData, COLOR_INK, 2],
-            ["/" + (targetMinutes() / 60).toString() + "H", _label, COLOR_FAINT, 0]
+            ["/" + (targetMinutes() / 60).toString() + "H", _label, COLOR_MUTED, 0]
         ]);
     }
 
-    // Steps and weather.
-    private function drawTopRow(dc as Graphics.Dc) as Void {
+    // One band across the top: Body Battery and heart rate at their gauges' midpoints (10 and 2 o'clock,
+    // radius 180), steps and weather between them. An icon sits over each number instead of a text label.
+    private function drawReadouts(dc as Graphics.Dc) as Void {
+        var bb = bodyBattery();
+        var hr = heartRate();
         var steps = ActivityMonitor.getInfo().steps;
-        var labels = ["STEPS", "WEATHER"];
-        var values = [steps == null ? "--" : thousands(steps), temperature()];
-        for (var i = 0; i < 2; i++) {
-            var colX = _cx + (((i - 0.5) * 130) * _s).toNumber();
-            drawBaseline(dc, colX, y(82), _label, labels[i], COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
-            drawBaseline(dc, colX, y(115), _numData, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        var xs = [71, 172, 288, 383];
+        var values = [
+            bb == null ? "--" : bb.toString(),
+            steps == null ? "--" : thousands(steps),
+            temperature(),
+            hr == null ? "--" : hr.toString()
+        ];
+        for (var i = 0; i < 4; i++) {
+            var px = x(xs[i]);
+            dc.drawBitmap(px - 12, y(100), _readoutIcons[i]);
+            drawBaseline(dc, px, y(162), _numData, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
         }
     }
 
-    // Monday to Sunday with an icon per sport done that day. Today is amber.
-    private function drawWeekStrip(dc as Graphics.Dc) as Void {
-        var todayIdx = TrainingWeek.todayIndex();
-        for (var i = 0; i < 7; i++) {
-            var lx = _cx + (((i - 3) * 30) * _s).toNumber();
-            var color = i == todayIdx ? COLOR_ACCENT : (i > todayIdx ? COLOR_FAINT : COLOR_MUTED);
-            drawBaseline(dc, lx, y(155), _bold, WEEK_LETTERS[i], color, Graphics.TEXT_JUSTIFY_CENTER);
-            if (i == todayIdx) {
-                dc.setColor(COLOR_ACCENT, Graphics.COLOR_TRANSPARENT);
-                dc.fillRectangle(lx - 7, y(159), 14, 2);
-            }
-            var mask = _week.dayMask[i];
-            var count = 0;
-            for (var s = 0; s < 3; s++) {
-                if ((mask & (1 << s)) != 0) {
-                    count++;
-                }
-            }
-            var dx = lx - count * 13 / 2 + 1;
-            for (var s = 0; s < 3; s++) {
-                if ((mask & (1 << s)) != 0) {
-                    dc.drawBitmap(dx, y(164), _iconsSmall[s]);
-                    dx += 13;
-                }
-            }
-        }
-    }
-
-    // Segment time, dead center, with faint unlit segments. Amber seconds hang off the right,
-    // and the two side gauges' readouts sit either side.
+    // Segment time, dead center, with faint unlit segments. Amber seconds hang off the right.
     private function drawClock(dc as Graphics.Dc, clock as System.ClockTime, is24Hour as Boolean) as Void {
         var timeStr = hourText(clock.hour, is24Hour) + ":" + clock.min.format("%02d");
         var secStr = clock.sec.format("%02d");
@@ -257,18 +236,11 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         drawTop(dc, left, top, _segTime, "88:88", COLOR_GHOST);
         drawTop(dc, left, top, _segTime, timeStr, COLOR_INK);
         if (!is24Hour) {
-            drawBaseline(dc, left + tw + 10 + sw / 2, top + 22, _label, clock.hour < 12 ? "AM" : "PM", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
+            drawBaseline(dc, left + tw + 10 + sw / 2, top + 22, _label, clock.hour < 12 ? "AM" : "PM", COLOR_MUTED, Graphics.TEXT_JUSTIFY_CENTER);
         }
         drawTop(dc, left + tw + 10, top + 46, _segSecs, "88", COLOR_GHOST);
         drawTop(dc, left + tw + 10, top + 46, _segSecs, secStr, COLOR_ACCENT);
 
-        // Gauge readouts sit inside each side gauge at its midpoint (10 and 2 o'clock, radius 180).
-        var bb = bodyBattery();
-        drawBaseline(dc, x(71), y(143), _numData, bb == null ? "--" : bb.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
-        drawBaseline(dc, x(71), y(162), _label, "BB", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
-        var hr = heartRate();
-        drawBaseline(dc, x(383), y(143), _numData, hr == null ? "--" : hr.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
-        drawBaseline(dc, x(383), y(162), _label, "BPM", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
     }
 
     // Wrist down: dimmed time and date with the gauges, then every other row blacked out
@@ -277,7 +249,7 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         var timeStr = hourText(clock.hour, System.getDeviceSettings().is24Hour) + ":" + clock.min.format("%02d");
         var tw = dc.getTextWidthInPixels(timeStr, _segTime);
         drawTop(dc, _cx - tw / 2, y(189), _segTime, timeStr, COLOR_MUTED);
-        drawCentered(dc, y(300), _bold, dateText(Gregorian.info(Time.now(), Time.FORMAT_SHORT)), COLOR_FAINT);
+        drawCentered(dc, y(304), _bold, dateText(Gregorian.info(Time.now(), Time.FORMAT_SHORT)), COLOR_FAINT);
 
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(false);

@@ -1,9 +1,10 @@
 <drawables>
     <bitmap id="LauncherIcon" filename="launcher_icon.png"/>
-    <bitmap id="SwimLarge" filename="icon_swim_large.png"/>
-    <bitmap id="BikeLarge" filename="icon_bike_large.png"/>
-    <bitmap id="RunLarge" filename="icon_run_large.png"/>
-    <bitmap id="SwimSmall" filename="icon_swim_small.png"/>
-    <bitmap id="BikeSmall" filename="icon_bike_small.png"/>
-    <bitmap id="RunSmall" filename="icon_run_small.png"/>
+    <bitmap id="IconSwim" filename="icon_swim.png"/>
+    <bitmap id="IconBike" filename="icon_bike.png"/>
+    <bitmap id="IconRun" filename="icon_run.png"/>
+    <bitmap id="IconBodyBattery" filename="icon_body_battery.png"/>
+    <bitmap id="IconSteps" filename="icon_steps.png"/>
+    <bitmap id="IconTemp" filename="icon_temp.png"/>
+    <bitmap id="IconHeart" filename="icon_heart.png"/>
 </drawables>

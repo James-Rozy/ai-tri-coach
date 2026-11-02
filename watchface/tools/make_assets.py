@@ -163,49 +163,55 @@ def build_segment_font(name, w, h, t):
     write_font(name, "Split Decisions Segments", h, h, h, glyphs)
 
 
-# Sport icons: geometry on a 16-unit grid in sport_icons.json (shared with the mockup),
-# drawn in each sport's color at two sizes: the distance row and the week strip.
+# Icons: geometry on a 16-unit grid in sport_icons.json (shared with the mockup).
+# (geometry key, drawable file name, pixel size, color)
 SPORT_ICONS = Path(__file__).resolve().parent / "sport_icons.json"
-SPORT_COLORS = {"swim": (0x2E, 0xA4, 0xDC), "bike": (0xF2, 0x8E, 0x42), "run": (0x35, 0xC1, 0x77)}
-ICON_SIZES = {"Large": 18, "Small": 11}
+ICONS = [
+    ("swim", "icon_swim", 20, (0x2E, 0xA4, 0xDC)),
+    ("bike", "icon_bike", 20, (0xF2, 0x8E, 0x42)),
+    ("run", "icon_run", 20, (0x35, 0xC1, 0x77)),
+    ("bb", "icon_body_battery", 24, INK),
+    ("steps", "icon_steps", 24, INK),
+    ("temp", "icon_temp", 24, INK),
+    ("hr", "icon_heart", 24, (0xE5, 0x48, 0x4D)),
+]
 ICON_SS = 8
 
 
-def build_sport_icons():
-    icons = json.loads(SPORT_ICONS.read_text())
-    for key, elements in icons.items():
-        for suffix, size in ICON_SIZES.items():
-            k = size * ICON_SS / 16
-            mask = Image.new("L", (size * ICON_SS, size * ICON_SS), 0)
-            draw = ImageDraw.Draw(mask)
-            for e in elements:
-                ink = 0 if e.get("bg") else 255
-                if e["t"] in ("line", "fill"):
-                    pts = [(x * k, y * k) for x, y in e["p"]]
-                    if e["t"] == "fill":
-                        draw.polygon(pts, fill=ink)
-                    else:
-                        w = e["w"] * k
-                        draw.line(pts, fill=ink, width=round(w), joint="curve")
-                        for x, y in (pts[0], pts[-1]):  # round caps
-                            draw.ellipse((x - w / 2, y - w / 2, x + w / 2, y + w / 2), fill=ink)
+def build_icons():
+    geometry = json.loads(SPORT_ICONS.read_text())
+    for key, name, size, color in ICONS:
+        k = size * ICON_SS / 16
+        mask = Image.new("L", (size * ICON_SS, size * ICON_SS), 0)
+        draw = ImageDraw.Draw(mask)
+        for e in geometry[key]:
+            ink = 0 if e.get("bg") else 255
+            if e["t"] in ("line", "fill"):
+                pts = [(x * k, y * k) for x, y in e["p"]]
+                if e["t"] == "fill":
+                    draw.polygon(pts, fill=ink)
                 else:
-                    cx, cy, r = e["c"][0] * k, e["c"][1] * k, e["r"] * k
-                    if e["t"] == "dot":
-                        draw.ellipse((cx - r, cy - r, cx + r, cy + r), fill=ink)
-                    else:
-                        w = e["w"] * k
-                        draw.ellipse((cx - r - w / 2, cy - r - w / 2, cx + r + w / 2, cy + r + w / 2), outline=ink, width=round(w))
-            alpha = mask.resize((size, size), Image.LANCZOS)
-            # Opaque, blended onto black like the fonts, so the edges stay smooth. The face's
-            # background is black, so the square around each icon is invisible.
-            r, g, b = SPORT_COLORS[key]
-            img = Image.merge("RGB", (
-                alpha.point(lambda v: v * r // 255),
-                alpha.point(lambda v: v * g // 255),
-                alpha.point(lambda v: v * b // 255),
-            ))
-            img.save(DRAW_OUT / f"icon_{key}_{suffix.lower()}.png")
+                    w = e["w"] * k
+                    draw.line(pts, fill=ink, width=round(w), joint="curve")
+                    for x, y in (pts[0], pts[-1]):  # round caps
+                        draw.ellipse((x - w / 2, y - w / 2, x + w / 2, y + w / 2), fill=ink)
+            else:
+                cx, cy, r = e["c"][0] * k, e["c"][1] * k, e["r"] * k
+                if e["t"] == "dot":
+                    draw.ellipse((cx - r, cy - r, cx + r, cy + r), fill=ink)
+                else:
+                    w = e["w"] * k
+                    draw.ellipse((cx - r - w / 2, cy - r - w / 2, cx + r + w / 2, cy + r + w / 2), outline=ink, width=round(w))
+        alpha = mask.resize((size, size), Image.LANCZOS)
+        # Opaque, blended onto black like the fonts, so the edges stay smooth. The face's
+        # background is black, so the square around each icon is invisible.
+        r, g, b = color
+        img = Image.merge("RGB", (
+            alpha.point(lambda v: v * r // 255),
+            alpha.point(lambda v: v * g // 255),
+            alpha.point(lambda v: v * b // 255),
+        ))
+        img.save(DRAW_OUT / f"{name}.png")
 
 
 def build_launcher_icon():
@@ -230,6 +236,6 @@ if __name__ == "__main__":
         build_text_font(*spec)
     for spec in SEGMENT_FONTS:
         build_segment_font(*spec)
-    build_sport_icons()
+    build_icons()
     build_launcher_icon()
     print("Wrote fonts to", FONT_OUT, "and the icons to", DRAW_OUT)
