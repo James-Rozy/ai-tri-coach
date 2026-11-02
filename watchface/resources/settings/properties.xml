@@ -1,0 +1,10 @@
+<properties>
+    <!-- Weekly time targets in minutes, about the 7-hour base weeks. -->
+    <property id="SwimTarget" type="number">80</property>
+    <property id="BikeTarget" type="number">180</property>
+    <property id="RunTarget" type="number">150</property>
+    <!-- Michigan 2027 isn't confirmed; Sunday Sept 19 is a placeholder. -->
+    <property id="RaceDate" type="string">2027-09-19</property>
+    <!-- The words after "DAYS UNTIL" on the bottom bezel. -->
+    <property id="RaceLabel" type="string">RACE</property>
+</properties>

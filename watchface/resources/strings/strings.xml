@@ -1,0 +1,8 @@
+<strings>
+    <string id="AppName">Split Decisions</string>
+    <string id="SwimTargetTitle">Weekly swim target (minutes)</string>
+    <string id="BikeTargetTitle">Weekly bike target (minutes)</string>
+    <string id="RunTargetTitle">Weekly run target (minutes)</string>
+    <string id="RaceDateTitle">Race date (YYYY-MM-DD)</string>
+    <string id="RaceLabelTitle">Countdown label (after "DAYS UNTIL")</string>
+</strings>
