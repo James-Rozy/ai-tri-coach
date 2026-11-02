@@ -252,7 +252,8 @@ class SplitDecisionsView extends WatchUi.WatchFace {
     // conditions over the temperature.
     private function drawWeather(dc as Graphics.Dc, conditions as Weather.CurrentConditions?, settings as System.DeviceSettings) as Void {
         var wx = x(410);
-        var wy = y(184);
+        // The column (wind dial top to temperature baseline) centers on the panel's middle, like the status icons.
+        var wy = y(190);
         var wr = sz(21);
         dc.setColor(COLOR_MUTED, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(sz(2));
@@ -279,7 +280,7 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             var ms = (conditions.windSpeed as Float).toFloat();
             windText = Math.round(statute ? ms * 2.23694 : ms * 3.6).toNumber().toString() + (statute ? " MPH" : " KMH");
         }
-        drawBaseline(dc, wx, y(230), _bold, windText, COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, wx, y(236), _bold, windText, COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
 
         var temp = temperature(conditions, settings);
         if (conditions != null && conditions.condition != null) {
@@ -288,11 +289,11 @@ class SplitDecisionsView extends WatchUi.WatchFace {
                 _wxIcon = WatchUi.loadResource(conditionIcon(condition)) as WatchUi.BitmapResource;
                 _wxCondition = condition;
             }
-            dc.drawBitmap(wx - sz(14), y(242), _wxIcon as WatchUi.BitmapResource);
+            dc.drawBitmap(wx - sz(14), y(248), _wxIcon as WatchUi.BitmapResource);
         }
         // Center the digits on the column, letting the degree sign hang off to the right.
         var degree = temp.find("°") != null ? dc.getTextWidthInPixels("°", _temp) : 0;
-        drawBaseline(dc, wx + degree / 2, y(300), _temp, temp, COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, wx + degree / 2, y(306), _temp, temp, COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
     }
 
     // Garmin's 50-odd weather conditions, folded into seven icons.
