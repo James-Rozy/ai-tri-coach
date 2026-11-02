@@ -1,6 +1,7 @@
 // Cloudflare Workers config: serves the static build in dist/, no server code.
+// The name must match the Worker in the Cloudflare dashboard (ai-tri-coach), or Workers Builds fails.
 {
-  "name": "split-decisions",
+  "name": "ai-tri-coach",
   "compatibility_date": "2026-10-01",
   "assets": {
     "directory": "./dist",
