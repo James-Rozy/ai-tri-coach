@@ -41,7 +41,7 @@ const AOD_SHIFTS = [[0, 0], [3, 2], [-2, 3], [-3, -2], [2, -3]];
 
 // Layout is designed on the 454px Fenix 9 Pro 47mm (see the mockup) and scaled from there.
 const DESIGN_SIZE = 454.0;
-const RING_R = 45;
+const RING_R = 50;
 
 class SplitDecisionsView extends WatchUi.WatchFace {
 
@@ -58,9 +58,10 @@ class SplitDecisionsView extends WatchUi.WatchFace {
     // Everything else uses Garmin's built-in scalable fonts, which the watch draws smoothly at any size.
     // The bundled bitmap fonts are only a fallback.
     private var _big as Graphics.FontType;    // 48 bold: days to race day
-    private var _row as Graphics.FontType;    // 26 bold: steps, battery, HR, temperature
-    private var _val as Graphics.FontType;    // 24 bold: distance in the sport rings
-    private var _bold as Graphics.FontType;   // 20 bold: ring times, wind, the race label
+    private var _temp as Graphics.FontType;   // 28 bold: temperature
+    private var _row as Graphics.FontType;    // 26 bold: steps, battery, HR (as big as the quarter-width columns allow)
+    private var _val as Graphics.FontType;    // 26 bold: distance in the sport rings
+    private var _bold as Graphics.FontType;   // 22 bold: ring times, wind, the race label
     private var _small as Graphics.FontType;  // 16 regular: distance units
 
     // True when the scalable fonts loaded, which curved text needs.
@@ -86,9 +87,10 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         _segDay = WatchUi.loadResource(Rez.Fonts.SegDay) as WatchUi.FontResource;
         _segAmPm = WatchUi.loadResource(Rez.Fonts.SegAmPm) as WatchUi.FontResource;
         _big = textFont(BOLD_FACES, 48, Rez.Fonts.NumData);
+        _temp = textFont(BOLD_FACES, 28, Rez.Fonts.NumData);
         _row = textFont(BOLD_FACES, 26, Rez.Fonts.NumDetail);
-        _val = textFont(BOLD_FACES, 24, Rez.Fonts.NumDetail);
-        _bold = textFont(BOLD_FACES, 20, Rez.Fonts.MonoBold);
+        _val = textFont(BOLD_FACES, 26, Rez.Fonts.NumDetail);
+        _bold = textFont(BOLD_FACES, 22, Rez.Fonts.MonoBold);
         _small = textFont(REGULAR_FACES, 16, Rez.Fonts.MonoLabel);
         _sportIcons = [
             WatchUi.loadResource(Rez.Drawables.IconSwim) as WatchUi.BitmapResource,
@@ -168,21 +170,21 @@ class SplitDecisionsView extends WatchUi.WatchFace {
 
         if (!aod) {
             dc.setColor(COLOR_PANEL, COLOR_PANEL);
-            dc.fillRoundedRectangle(x(74), y(170), sz(296), sz(134), sz(12));
+            dc.fillRoundedRectangle(x(74), y(162), sz(296), sz(150), sz(12));
         }
         dc.setColor(line, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(sz(2));
-        dc.drawRoundedRectangle(x(74), y(170), sz(296), sz(134), sz(12));
+        dc.drawRoundedRectangle(x(74), y(162), sz(296), sz(150), sz(12));
         dc.setPenWidth(1);
-        dc.drawRoundedRectangle(x(230), y(177), sz(128), sz(42), sz(6));
+        dc.drawRoundedRectangle(x(230), y(167), sz(128), sz(46), sz(6));
 
         // Day of the week, then month-day in its inset box.
-        drawSeg(dc, 90, 182, _segDay, 4.5, DAY_NAMES[(today.day_of_week as Number) - 1], dim);
+        drawSeg(dc, 90, 172, _segDay, 4.5, DAY_NAMES[(today.day_of_week as Number) - 1], dim);
         var dateStr = (today.month as Number).format("%02d") + "-" + (today.day as Number).format("%02d");
         if (!aod) {
-            drawSeg(dc, 240, 183, _segDate, 5, "88-88", COLOR_GHOST);
+            drawSeg(dc, 240, 173, _segDate, 5, "88-88", COLOR_GHOST);
         }
-        drawSeg(dc, 240, 183, _segDate, 5, dateStr, dim);
+        drawSeg(dc, 240, 173, _segDate, 5, dateStr, dim);
 
         // Time. In 12-hour mode a leading zero goes dark instead, like an LCD.
         var hour = clock.hour;
@@ -194,14 +196,14 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             hourStr = hour < 10 ? " " + hour.toString() : hour.toString();
         }
         if (!aod) {
-            drawSeg(dc, 90, 232, _segTime, 10, "88:88", COLOR_GHOST);
+            drawSeg(dc, 90, 224, _segTime, 10, "88:88", COLOR_GHOST);
         }
-        drawSeg(dc, 90, 232, _segTime, 10, hourStr + ":" + clock.min.format("%02d"), ink);
+        drawSeg(dc, 90, 224, _segTime, 10, hourStr + ":" + clock.min.format("%02d"), ink);
         if (aod) {
             return;
         }
         if (!is24Hour) {
-            drawSeg(dc, 316, 234, _segAmPm, 3, clock.hour < 12 ? "AM" : "PM", COLOR_MUTED);
+            drawSeg(dc, 316, 226, _segAmPm, 3, clock.hour < 12 ? "AM" : "PM", COLOR_MUTED);
         }
         drawSeg(dc, 316, 266, _segSecs, 4, "88", COLOR_GHOST);
         drawSeg(dc, 316, 266, _segSecs, 4, clock.sec.format("%02d"), COLOR_ACCENT);
@@ -212,10 +214,10 @@ class SplitDecisionsView extends WatchUi.WatchFace {
     private function drawSportRings(dc as Graphics.Dc) as Void {
         var statute = System.getDeviceSettings().distanceUnits == System.UNIT_STATUTE;
         for (var i = 0; i < 3; i++) {
-            var rx = x(127 + i * 100);
-            var ry = y(108);
+            var rx = x(117 + i * 110);
+            var ry = y(100);
             dc.setColor(COLOR_TRACK, Graphics.COLOR_TRANSPARENT);
-            dc.setPenWidth(sz(6));
+            dc.setPenWidth(sz(7));
             dc.drawCircle(rx, ry, sz(RING_R));
             var minutes = _week.seconds[i] / 60;
             var target = targetMinutes(i);
@@ -223,18 +225,18 @@ class SplitDecisionsView extends WatchUi.WatchFace {
                 dc.setColor(SPORT_COLORS[i], Graphics.COLOR_TRANSPARENT);
                 dc.drawCircle(rx, ry, sz(RING_R));
             } else if (minutes > 0) {
-                drawArcAt(dc, rx, ry, sz(RING_R), 0.0, 360.0 * minutes / target, SPORT_COLORS[i], 6);
+                drawArcAt(dc, rx, ry, sz(RING_R), 0.0, 360.0 * minutes / target, SPORT_COLORS[i], 7);
             }
 
-            dc.drawBitmap(rx - sz(11), y(68), _sportIcons[i]);
+            dc.drawBitmap(rx - sz(12), y(60), _sportIcons[i]);
             var value = distanceValue(i, statute);
             var unit = distanceUnit(i, statute);
             var vw = dc.getTextWidthInPixels(value, _val);
             var uw = dc.getTextWidthInPixels(unit, _small);
             var x0 = rx - (vw + 2 + uw) / 2;
-            drawBaseline(dc, x0, y(117), _val, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
-            drawBaseline(dc, x0 + vw + 2, y(117), _small, unit, COLOR_MUTED, Graphics.TEXT_JUSTIFY_LEFT);
-            drawBaseline(dc, rx, y(141), _bold, formatMinutes(minutes), COLOR_MUTED, Graphics.TEXT_JUSTIFY_CENTER);
+            drawBaseline(dc, x0, y(112), _val, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
+            drawBaseline(dc, x0 + vw + 2, y(112), _small, unit, COLOR_MUTED, Graphics.TEXT_JUSTIFY_LEFT);
+            drawBaseline(dc, rx, y(136), _bold, formatMinutes(minutes), COLOR_MUTED, Graphics.TEXT_JUSTIFY_CENTER);
         }
     }
 
@@ -243,15 +245,15 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         var dnd = (settings has :doNotDisturb) && settings.doNotDisturb;
         var on = [settings.phoneConnected, dnd, settings.alarmCount > 0];
         for (var i = 0; i < 3; i++) {
-            dc.drawBitmap(x(35), y(183 + i * 40), on[i] ? _statusOn[i] : _statusOff[i]);
+            dc.drawBitmap(x(28), y(176 + i * 44), on[i] ? _statusOn[i] : _statusOff[i]);
         }
     }
 
     // Wind dial (the arrow points where the wind is blowing) with its speed, then the temperature.
     private function drawWeather(dc as Graphics.Dc, conditions as Weather.CurrentConditions?, settings as System.DeviceSettings) as Void {
         var wx = x(410);
-        var wy = y(198);
-        var wr = sz(20);
+        var wy = y(194);
+        var wr = sz(21);
         dc.setColor(COLOR_MUTED, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(sz(2));
         dc.drawCircle(wx, wy, wr);
@@ -262,8 +264,8 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         if (conditions != null && conditions.windBearing != null) {
             // Weather reports where the wind comes from; the arrow shows where it's going.
             var a = Math.toRadians(((conditions.windBearing as Number) + 180) % 360);
-            var px = [0, 8, 0, -8] as Array<Number>;
-            var py = [-17, 9, 5, 9] as Array<Number>;
+            var px = [0, 9, 0, -9] as Array<Number>;
+            var py = [-18, 10, 6, 10] as Array<Number>;
             var poly = [];
             for (var i = 0; i < 4; i++) {
                 var ax = px[i] * _s;
@@ -277,17 +279,17 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             var ms = (conditions.windSpeed as Float).toFloat();
             windText = Math.round(statute ? ms * 2.23694 : ms * 3.6).toNumber().toString() + (statute ? " MPH" : " KMH");
         }
-        drawBaseline(dc, wx, y(243), _bold, windText, COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, wx, y(242), _bold, windText, COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
 
         var temp = temperature(conditions, settings);
-        var tw = dc.getTextWidthInPixels(temp, _row);
-        var tx = wx - (sz(23) + tw) / 2;
-        dc.drawBitmap(tx, y(264), _icons[3]);
-        drawBaseline(dc, tx + sz(23), y(284), _row, temp, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
+        var tw = dc.getTextWidthInPixels(temp, _temp);
+        var tx = x(408) - (sz(25) + tw) / 2;
+        dc.drawBitmap(tx, y(263), _icons[3]);
+        drawBaseline(dc, tx + sz(25), y(286), _temp, temp, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
     }
 
-    // Under the panel, an icon beside each number: steps centered across the panel's left half,
-    // battery and heart rate in a quarter each.
+    // Under the panel, an icon beside each number: steps from the panel's left edge across its left half,
+    // battery from the middle, heart rate ending at the panel's right edge.
     private function drawReadouts(dc as Graphics.Dc) as Void {
         var steps = ActivityMonitor.getInfo().steps;
         var hr = heartRate();
@@ -296,12 +298,11 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             Math.round(System.getSystemStats().battery).toNumber().toString() + "%",
             hr == null ? "--" : hr.toString()
         ];
-        var centers = [148, 259, 333];
         for (var i = 0; i < 3; i++) {
             var vw = dc.getTextWidthInPixels(values[i], _row);
-            var x0 = x(centers[i]) - (sz(27) + vw) / 2;
-            dc.drawBitmap(x0, y(324), _icons[i]);
-            drawBaseline(dc, x0 + sz(27), y(344), _row, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
+            var x0 = i == 0 ? x(74) : (i == 1 ? x(227) : x(370) - sz(28) - vw);
+            dc.drawBitmap(x0, y(330), _icons[i]);
+            drawBaseline(dc, x0 + sz(28), y(352), _row, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
         }
     }
 
@@ -314,10 +315,10 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         var labelSetting = Application.Properties.getValue("RaceLabel");
         var label = (labelSetting instanceof String && labelSetting.length() > 0) ? labelSetting.toUpper() : "RACE";
         var text = daysLeft == 0 ? "IT'S RACE DAY" : (daysLeft == 1 ? "DAY" : "DAYS") + " UNTIL " + label;
-        drawBaseline(dc, _cx, y(400), _big, daysLeft.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, _cx, y(403), _big, daysLeft.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
         if ((dc has :drawRadialText) && _vector) {
             dc.setColor(COLOR_MUTED, Graphics.COLOR_TRANSPARENT);
-            dc.drawRadialText(_cx, _cy, _bold, text, Graphics.TEXT_JUSTIFY_CENTER, 270, sz(208),
+            dc.drawRadialText(_cx, _cy, _bold, text, Graphics.TEXT_JUSTIFY_CENTER, 270, sz(210),
                 Graphics.RADIAL_TEXT_DIRECTION_COUNTER_CLOCKWISE);
         } else {
             drawBaseline(dc, _cx, y(424), _bold, text, COLOR_MUTED, Graphics.TEXT_JUSTIFY_CENTER);
