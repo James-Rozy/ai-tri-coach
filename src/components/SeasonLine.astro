@@ -1,0 +1,136 @@
+---
+import { season } from '../data/season';
+
+// Position on the line as a fraction of the season. Set at build time, then refreshed in the browser.
+const t0 = Date.parse(season.start);
+const t1 = Date.parse(season.end);
+const span = t1 - t0;
+const at = (d: string) => (Date.parse(d) - t0) / span;
+const clamp = (n: number) => Math.min(1, Math.max(0, n));
+const now = clamp((Date.now() - t0) / span);
+const fmt = (d: string) =>
+  new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', year: '2-digit' }).replace(' ', " '");
+---
+<figure class="season" data-start={t0} data-end={t1} style={`--now: ${now}`}>
+  <figcaption class="visually-hidden">
+    Season plan: {season.phases.map((p) => `${p.name} ${p.from} to ${p.to}`).join(', ')}, then {season.race.name}.
+  </figcaption>
+  <ol class="track" aria-hidden="true">
+    {season.phases.map((p) => (
+      <li style={`--from: ${at(p.from)}; --to: ${at(p.to)}; --leg: ${p.color}`}>
+        <span class="name">{p.name}</span>
+        <span class="when mono">{fmt(p.from)}</span>
+      </li>
+    ))}
+  </ol>
+  <div class="you" aria-hidden="true"><span class="mono">You are here</span></div>
+  <div class="finish" aria-hidden="true">
+    <span class="mono">{season.race.date}</span>
+    <strong>{season.race.name}</strong>
+  </div>
+  <ul class="notes">
+    {season.phases.map((p) => (
+      <li style={`--leg: ${p.color}`}><strong>{p.name}.</strong> <span class="muted">{p.note}</span></li>
+    ))}
+    <li style="--leg: var(--accent)"><strong>{season.race.name}.</strong> <span class="muted">{season.race.note}. {season.then}.</span></li>
+  </ul>
+</figure>
+
+<script>
+  // Keep "you are here" honest between deploys.
+  for (const el of document.querySelectorAll<HTMLElement>('.season[data-start]')) {
+    const t0 = Number(el.dataset.start), t1 = Number(el.dataset.end);
+    el.style.setProperty('--now', String(Math.min(1, Math.max(0, (Date.now() - t0) / (t1 - t0)))));
+  }
+</script>
+
+<style>
+  @layer components {
+    .season { margin: 0; display: grid; gap: var(--space-m); position: relative; padding-block-start: 2.4rem; }
+    .track {
+      list-style: none;
+      padding: 0;
+      position: relative;
+      block-size: 4.5rem;
+    }
+    .track li {
+      position: absolute;
+      inset-inline-start: calc(var(--from) * 100%);
+      inline-size: calc((var(--to) - var(--from)) * 100%);
+      inset-block: 0;
+      border-block-start: 6px solid var(--leg);
+      padding: 0.6rem 0.4rem 0 0;
+      display: grid;
+      align-content: start;
+      gap: 0.1rem;
+      font-size: var(--step--1);
+      min-inline-size: 0;
+    }
+    /* Short phases (the taper) keep their color but drop the label. */
+    .track li:last-child .name, .track li:last-child .when { display: none; }
+    .name { font-weight: 700; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .when { color: var(--ink-faint); font-size: 0.75rem; }
+
+    /* Scroll-driven: the colored line draws itself as the season scrolls into view. */
+    @supports (animation-timeline: view()) {
+      @media (prefers-reduced-motion: no-preference) {
+        .track li { animation: reveal linear both; animation-timeline: view(); animation-range: entry 10% cover 40%; }
+        .track li:nth-child(2) { animation-range: entry 20% cover 45%; }
+        .track li:nth-child(3) { animation-range: entry 30% cover 50%; }
+        .track li:nth-child(4) { animation-range: entry 40% cover 55%; }
+      }
+    }
+    @keyframes reveal { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+
+    .you {
+      position: absolute;
+      inset-block-start: 0.5rem;
+      inset-inline-start: calc(var(--now) * 100%);
+      translate: -50% 0;
+      display: grid;
+      justify-items: center;
+      pointer-events: none;
+    }
+    .you span {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: var(--accent);
+      color: var(--on-accent);
+      padding: 0.15em 0.5em;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .you::after {
+      content: "";
+      inline-size: 2px;
+      block-size: 1.6rem;
+      background: var(--accent);
+      animation: blink 1.2s steps(2) infinite;
+    }
+    @keyframes blink { 50% { opacity: 0.25; } }
+    .season:has(.you) .you { inset-inline-start: clamp(3.5rem, calc(var(--now) * 100%), calc(100% - 3.5rem)); }
+
+    .finish {
+      justify-self: end;
+      display: grid;
+      justify-items: end;
+      margin-block-start: -1.2rem;
+      border-inline-end: 3px solid var(--accent);
+      padding-inline-end: 0.6rem;
+      font-size: var(--step--1);
+    }
+    .finish span { color: var(--accent); font-size: 0.75rem; }
+    .finish strong { text-transform: uppercase; font-stretch: 85%; }
+
+    .notes {
+      list-style: none;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+      gap: var(--space-s);
+      font-size: var(--step--1);
+    }
+    .notes li { border-inline-start: 3px solid var(--leg); padding-inline-start: 0.7rem; }
+  }
+</style>

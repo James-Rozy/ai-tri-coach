@@ -1,134 +1,177 @@
 ---
 import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import PromptCard from '../components/PromptCard.astro';
 import Signup from '../components/Signup.astro';
-import { Image } from 'astro:assets';
+import SeasonLine from '../components/SeasonLine.astro';
+import WatchFacePreview from '../components/watchface/WatchFacePreview';
+import { watchFaces } from '../data/watchFaces';
 import finishChute from '../assets/photos/finish-chute.jpg';
-import swimExit from '../assets/photos/swim-exit.jpg';
-import bike from '../assets/photos/bike.jpg';
-import run from '../assets/photos/run.jpg';
 
 const prompts = (await getCollection('prompts', ({ data }) => data.tier === 'free')).sort(
   (a, b) => a.data.order - b.data.order,
 );
+const updates = (await getCollection('updates')).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const latest = updates[0];
+const shortDate = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 
-// Official result, Ironman 70.3 Michigan (Frankfort), 2026-09-20. Bib 2073, M25-29.
-const splits = [
-  { leg: 'Swim', time: '0:30:26', note: '7th in division', color: 'var(--swim)' },
-  { leg: 'T1', time: '0:09:04', note: 'calf cramps', color: 'var(--trans)' },
-  { leg: 'Bike', time: '2:45:40', note: '36th', color: 'var(--bike)' },
-  { leg: 'T2', time: '0:04:18', note: '', color: 'var(--trans)' },
-  { leg: 'Run', time: '1:53:28', note: '46th', color: 'var(--run)' },
+// The site's sections as a timing board: each one is a split on the way to the finish (the newsletter).
+const course = [
+  { split: '01', name: 'Guide', href: '/guide/', what: 'Set up your own AI coach', meta: `${prompts.length} prompts · free`, color: 'var(--swim)' },
+  { split: '02', name: 'My progress', href: '/progress/', what: 'My Ironman build, in public', meta: `Updated ${shortDate(latest.data.date)}`, color: 'var(--bike)' },
+  { split: '03', name: 'Watch faces', href: '/watch-faces/', what: 'Custom faces for your watch', meta: `${watchFaces.length} for Garmin`, color: 'var(--run)' },
+  { split: '04', name: 'About', href: '/about/', what: 'Why I’m building this', meta: 'The story', color: 'var(--trans)' },
 ];
 
-// From the race analysis: minutes lost on land vs a sub-5 day.
-const lost = [
-  { leg: 'Bike', minutes: 10, note: 'Dropped chain on the first climb, then a cramping last quarter', color: 'var(--bike)' },
-  { leg: 'Run', minutes: 7, note: 'Stops at mile 4 (cramps) and mile 9', color: 'var(--run)' },
-  { leg: 'Transitions', minutes: 6, note: 'Calf cramps stripping the wetsuit in T1', color: 'var(--trans)' },
-];
-const maxLost = Math.max(...lost.map((l) => l.minutes));
-
-// Race photos (FinisherPix), one per leg.
-const legPhotos = [
-  { src: swimExit, leg: 'Swim', time: '0:30:26', caption: '7th in my division out of the water', alt: 'James running out of the lake after the swim in a wetsuit and green cap', color: 'var(--swim)' },
-  { src: bike, leg: 'Bike', time: '2:45:40', caption: 'Dropped chain, then cramps late', alt: 'James riding his road bike toward the camera on the bike course', color: 'var(--bike)' },
-  { src: run, leg: 'Run', time: '1:53:28', caption: 'Two stops, otherwise 7:40 to 7:59 a mile', alt: 'James running on the run course wearing bib 2073', color: 'var(--run)' },
+const steps = [
+  { n: '1', title: 'Tell it your goal', body: 'One prompt turns an AI chat into your coach: your sport, a goal you can measure, your history, the time you have.' },
+  { n: '2', title: 'Give it your data', body: 'Connect your training app or upload an export. Scorecards and a notebook work too. Plans come from your numbers, not a template.' },
+  { n: '3', title: 'Check in every week', body: 'It reads what you actually did, flags fatigue and missed sessions out loud, and tells you what it changed and why.' },
 ];
 ---
 <Base title="Home">
+  <Fragment slot="head">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" />
+  </Fragment>
+
   <section class="hero wrap">
     <div class="hero-copy stack">
-      <p class="label">Any sport · Tested in public on an Ironman</p>
-      <h1>Use AI to coach yourself at the sport you want to get better at.</h1>
+      <p class="label">Self-coaching with AI · any sport</p>
+      <h1>Build an AI coach that gets you to <span class="goal">your goal</span>.</h1>
       <p class="lede muted">
-        Running, cycling, swimming, triathlon, golf, or anything else with a goal you can measure. These are the
-        prompts and setup I use with Claude, free to copy. I'm the test case: after missing sub-5 at 70.3 Michigan,
-        I'm letting Claude coach me to a rematch and then my first Ironman, misses included.
+        Pick a goal you can measure. Split Decisions shows you how to set up an AI coach that plans from your own data,
+        explains every call, and tells you when you’re slipping. It works for running, cycling, swimming, golf, or
+        anything else with a number on it.
       </p>
       <div class="actions">
-        <a class="button" href="/kit/">Get the free starter kit</a>
-        <a href="#signup">Follow the build</a>
+        <a class="button" href="/guide/">Start the free guide <span class="arrow" aria-hidden="true">→</span></a>
+        <a class="button ghost" href="/newsletter/">Get the newsletter</a>
       </div>
     </div>
 
-    <div class="hero-media">
-      <figure class="photo">
-        <Image
-          src={finishChute}
-          alt="James smiling as he runs down the finish chute at Ironman 70.3 Michigan, bib 2073"
-          widths={[480, 800, 1200]}
-          sizes="(width < 40rem) 100vw, 40vw"
-          loading="eager"
-          fetchpriority="high"
-        />
-      </figure>
-
-      <div class="splits mono" aria-label="Official splits, Ironman 70.3 Michigan 2026">
-        <div class="splits-head"><span>70.3 Michigan · Bib 2073</span><span>Goal 4:59:59</span></div>
-        <dl>
-          {splits.map((s) => (
-            <div class="split" style={`--leg: ${s.color}`}>
-              <dt>{s.leg}</dt>
-              <dd class="time">{s.time}</dd>
-              <dd class="split-note">{s.note}</dd>
-            </div>
-          ))}
-        </dl>
-        <div class="finish">
-          <span>Finish</span>
-          <span class="finish-time">5:22:56</span>
-          <span class="over">+22:57</span>
-        </div>
-      </div>
-    </div>
+    <nav class="board mono" aria-label="What’s on Split Decisions">
+      <div class="board-head"><span>Course map</span><span class="clock" aria-hidden="true">00<i>:</i>00<i>:</i>00</span></div>
+      <ol>
+        {course.map((c, i) => (
+          <li style={`--leg: ${c.color}; --i: ${i}`}>
+            <a href={c.href}>
+              <span class="split">{c.split}</span>
+              <span class="name">{c.name}</span>
+              <span class="what">{c.what}</span>
+              <span class="meta">{c.meta}</span>
+              <span class="arrow" aria-hidden="true">→</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+      <a class="fin" href="/newsletter/" style={`--i: ${course.length}`}>
+        <span class="split">Fin</span>
+        <span class="name">Newsletter</span>
+        <span class="what">Every other Sunday</span>
+        <span class="arrow" aria-hidden="true">→</span>
+      </a>
+    </nav>
   </section>
 
-  <!--
-    TODO(James): the swim/bike/run course line. Plan: an SVG path that draws with a scroll-driven
-    animation (animation-timeline: view()) and reveals each leg's minutes as it passes.
-  -->
-  <section class="wrap section stack" aria-labelledby="lost-heading">
-    <p class="label">The test case: me</p>
-    <h2 id="lost-heading">Where my 23 minutes went</h2>
-    <p class="muted">
-      The first thing I asked Claude was where my race went wrong. I was 7th in my division out of the water and
-      finished 46th. All of the time was lost on land.
-    </p>
-    <ol class="lost">
-      {lost.map((l) => (
-        <li style={`--share: ${l.minutes / maxLost}; --leg: ${l.color}`}>
-          <span class="leg">{l.leg}</span>
-          <span class="bar" aria-hidden="true"></span>
-          <span class="mins mono">−{l.minutes}:00</span>
-          <span class="note muted">{l.note}</span>
+  <script>
+    // The board's race clock counts up from when the page opened.
+    const clock = document.querySelector<HTMLElement>('.clock');
+    if (clock && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const start = performance.now();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      setInterval(() => {
+        const s = Math.floor((performance.now() - start) / 1000);
+        clock.innerHTML = [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60].map(pad).join('<i>:</i>');
+      }, 1000);
+    }
+  </script>
+
+  <section class="wrap section stack" aria-labelledby="how-heading">
+    <p class="label">How it works</p>
+    <h2 id="how-heading">Three steps to your own coach</h2>
+    <ol class="steps">
+      {steps.map((s) => (
+        <li>
+          <span class="step-n mono" aria-hidden="true">{s.n}</span>
+          <h3>{s.title}</h3>
+          <p class="muted">{s.body}</p>
         </li>
       ))}
     </ol>
-    <ul class="legs">
-      {legPhotos.map((p) => (
-        <li style={`--leg: ${p.color}`}>
-          <figure>
-            <Image src={p.src} alt={p.alt} widths={[360, 600, 900]} sizes="(width < 40rem) 100vw, 30vw" />
-            <figcaption>
-              <span class="mono leg-time"><span class="leg-name">{p.leg}</span> {p.time}</span>
-              <span class="muted">{p.caption}</span>
-            </figcaption>
-          </figure>
-        </li>
-      ))}
-    </ul>
-    <p><a href="/prompts/performance-debrief/">The debrief prompt I used</a>, which works for a round of golf or a 10K just as well.</p>
   </section>
 
-  <section class="wrap section stack" aria-labelledby="kit-heading">
+  <section class="wrap section stack" aria-labelledby="guide-heading">
     <div class="section-head">
-      <h2 id="kit-heading">The starter kit</h2>
-      <span class="mono muted">4 prompts · free · any sport</span>
+      <div class="stack">
+        <p class="label">01 · The guide</p>
+        <h2 id="guide-heading">Your coach, set up in four prompts</h2>
+      </div>
+      <a href="/guide/">Read the full guide <span class="arrow" aria-hidden="true">→</span></a>
     </div>
+    <p class="muted">Copy them into your AI app in order. Each one comes with examples for different sports.</p>
     <div class="grid">
       {prompts.map((prompt) => <PromptCard prompt={prompt} />)}
+    </div>
+  </section>
+
+  <section class="wrap section stack" aria-labelledby="progress-heading">
+    <div class="section-head">
+      <div class="stack">
+        <p class="label">02 · My progress</p>
+        <h2 id="progress-heading">I’m the test case</h2>
+      </div>
+      <a href="/progress/">Every update <span class="arrow" aria-hidden="true">→</span></a>
+    </div>
+    <p class="muted">
+      I missed my goal at 70.3 Michigan, so I’m letting an AI coach me to a rematch and then my first Ironman. The
+      plans, the data and the bad weeks all go up here.
+    </p>
+    <SeasonLine />
+    <a class="latest" href={`/progress/#${latest.id}`}>
+      <span class="mono latest-date">{shortDate(latest.data.date)} · {latest.data.phase}</span>
+      <strong>{latest.data.title}</strong>
+      <span class="muted">{latest.data.summary}</span>
+    </a>
+  </section>
+
+  <section class="wrap section" aria-labelledby="watch-heading">
+    <div class="watch">
+      <div class="watch-preview">
+        <WatchFacePreview client:visible controls={false} />
+      </div>
+      <div class="stack watch-copy">
+        <p class="label">03 · Watch faces</p>
+        <h2 id="watch-heading">Your training week, on your wrist</h2>
+        <p class="muted">
+          {watchFaces[0].name} is the face I wear every day: swim, bike and run rings that fill toward your weekly
+          targets, an LCD panel for the time, and a countdown to race day. It’s live on the left, ticking in your time
+          zone.
+        </p>
+        <p><a class="button" href="/watch-faces/">See the watch faces <span class="arrow" aria-hidden="true">→</span></a></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap section" aria-labelledby="about-heading">
+    <div class="about">
+      <figure>
+        <Image
+          src={finishChute}
+          alt="James smiling as he runs down the finish chute at Ironman 70.3 Michigan"
+          widths={[400, 700, 1000]}
+          sizes="(width < 40rem) 100vw, 40vw"
+        />
+      </figure>
+      <div class="stack">
+        <p class="label">04 · About</p>
+        <h2 id="about-heading">Hi, I’m James</h2>
+        <p class="muted">
+          I’m a frontend developer in Chicago, a former D1 water polo player, and an age-group triathlete who came up 23
+          minutes short of his goal. Split Decisions is what I’m building on the way back.
+        </p>
+        <p><a href="/about/">Read the story <span class="arrow" aria-hidden="true">→</span></a></p>
+      </div>
     </div>
   </section>
 
@@ -147,153 +190,146 @@ const legPhotos = [
       padding-block: var(--space-l) var(--space-xl);
     }
     .hero-copy { --stack-gap: var(--space-m); }
+    .goal {
+      color: var(--accent);
+      background: linear-gradient(var(--accent), var(--accent)) left bottom / 100% 0.08em no-repeat;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .goal { animation: underline 0.8s 0.6s ease-out both; }
+    }
+    @keyframes underline { from { background-size: 0 0.08em; } }
     .lede { font-size: var(--step-1); line-height: 1.5; }
-    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-m); }
-    .button {
-      display: inline-block;
-      padding: 0.9em 1.5em;
-      border-radius: 6px;
-      background: var(--accent);
-      color: var(--on-accent);
-      font-weight: 700;
-      text-decoration: none;
-    }
-    .button:hover { filter: brightness(1.08); }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-s); }
 
-    .hero-media { position: relative; display: grid; }
-    .photo {
-      grid-area: 1 / 1;
-      aspect-ratio: 4 / 5;
-      inline-size: 85%;
-      justify-self: end;
-      margin: 0;
-      overflow: hidden;
-      border-radius: var(--radius);
-      border: 1px solid var(--line);
+    /* Timing board: each section of the site is a split. */
+    .board {
       background: var(--surface);
-    }
-    .photo img {
-      inline-size: 100%;
-      block-size: 100%;
-      object-fit: cover;
-      /* Keep James, not the crowd, in a tall crop of a wide photo. */
-      object-position: 72% 30%;
-    }
-    .splits {
-      grid-area: 1 / 1;
-      align-self: end;
-      inline-size: min(100%, 24rem);
-      margin-block-end: -1.5rem;
-      background: rgb(21 26 33 / 0.92);
-      backdrop-filter: blur(8px);
       border: 1px solid var(--line);
       border-radius: var(--radius);
       padding: var(--space-m);
       display: grid;
-      gap: 0.9rem;
+      gap: 0.4rem;
       font-size: var(--step--1);
+      box-shadow: 0 2rem 4rem rgb(0 0 0 / 0.35);
     }
-    .splits-head {
+    .board-head {
       display: flex;
       justify-content: space-between;
-      gap: 1rem;
       color: var(--ink-faint);
       text-transform: uppercase;
       letter-spacing: 0.08em;
       font-size: 0.75rem;
+      padding-block-end: 0.5rem;
+      border-block-end: 1px dashed var(--line);
     }
-    .splits dl { display: grid; gap: 0.5rem; }
-    .split {
+    .clock { color: var(--accent); }
+    .clock i { font-style: normal; animation: blink 1s steps(2) infinite; }
+    @keyframes blink { 50% { opacity: 0.2; } }
+    .board ol { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.4rem; }
+    .board a {
       display: grid;
-      grid-template-columns: 3.5rem auto 1fr;
-      gap: 0.75rem;
+      grid-template-columns: 2.5rem 1fr auto;
+      grid-template-areas: "split name arrow" "split what meta";
+      column-gap: 0.75rem;
       align-items: baseline;
-      border-inline-start: 3px solid var(--leg);
-      padding-inline-start: 0.6rem;
+      padding: 0.7rem 0.8rem 0.7rem 0.7rem;
+      border-radius: 6px;
+      border-inline-start: 3px solid var(--leg, var(--accent));
+      text-decoration: none;
+      background: linear-gradient(90deg, var(--accent-dim), transparent) left / 0% 100% no-repeat;
+      transition: background-size 0.35s ease-out;
     }
-    .split dt { text-transform: uppercase; }
-    .split-note { color: var(--ink-faint); text-align: end; }
-    .finish {
-      display: flex;
-      align-items: baseline;
-      gap: 0.75rem;
-      border-block-start: 1px dashed var(--line);
-      padding-block-start: 0.9rem;
-      text-transform: uppercase;
-      color: var(--ink-faint);
-    }
-    .finish-time { font-size: var(--step-2); font-weight: 600; color: var(--ink); }
-    .over { margin-inline-start: auto; color: var(--accent); font-weight: 600; }
+    .board a:hover, .board a:focus-visible { background-size: 100% 100%; }
+    .split { grid-area: split; color: var(--ink-faint); text-transform: uppercase; }
+    .name { grid-area: name; font-family: var(--font-display); font-weight: 900; font-stretch: 75%; font-size: var(--step-1); text-transform: uppercase; line-height: 1.1; }
+    .what { grid-area: what; color: var(--ink-muted); font-family: var(--font-sans); }
+    .meta { grid-area: meta; color: var(--ink-faint); text-align: end; white-space: nowrap; font-size: 0.75rem; }
+    .board .arrow { grid-area: arrow; justify-self: end; color: var(--leg, var(--accent)); }
+    .fin { --leg: var(--accent); margin-block-start: 0.4rem; border-block-start: 1px dashed var(--line); grid-template-areas: "split name arrow" "split what arrow" !important; }
+    .fin .name { color: var(--accent); }
 
-    /* Phones: photo on top, splits card overlapping its bottom edge. */
-    @media (width < 40rem) {
-      .hero-media { display: flex; flex-direction: column; }
-      .photo { inline-size: 100%; aspect-ratio: 4 / 3; }
-      .splits { inline-size: 100%; margin-block: -3rem 0; justify-self: auto; }
-      .lost li { grid-template-columns: 7rem 1fr auto; }
+    /* Splits come in one after another, like a results board updating. */
+    @media (prefers-reduced-motion: no-preference) {
+      .board li, .fin { animation: split-in 0.45s calc(0.15s + var(--i) * 0.09s) cubic-bezier(0.2, 0.7, 0.2, 1) both; }
     }
+    @keyframes split-in { from { opacity: 0; translate: -0.75rem 0; clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
 
-    .lost { list-style: none; padding: 0; display: grid; gap: var(--space-m); }
-    .lost li {
-      display: grid;
-      grid-template-columns: 9rem 1fr auto;
-      grid-template-areas: "leg bar mins" ". note note";
-      align-items: center;
-      column-gap: var(--space-s);
-    }
-    .leg { grid-area: leg; font-weight: 700; text-transform: uppercase; }
-    .bar {
-      grid-area: bar;
-      block-size: 0.6rem;
-      border-radius: 999px;
-      background: var(--leg);
-      inline-size: calc(var(--share) * 100%);
-    }
-    .mins { grid-area: mins; font-weight: 600; }
-    .note { grid-area: note; font-size: var(--step--1); }
+    .section-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: var(--space-s); }
+    .section-head > a, .stack > p > a:not(.button) { text-decoration: none; color: var(--accent); font-weight: 600; }
 
-    .legs {
+    .steps {
       list-style: none;
       padding: 0;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
       gap: var(--space-s);
+      counter-reset: step;
     }
-    .legs figure { margin: 0; display: grid; gap: 0.6rem; }
-    .legs img {
-      inline-size: 100%;
-      block-size: auto;
-      aspect-ratio: 4 / 5;
-      object-fit: cover;
+    .steps li {
+      position: relative;
+      display: grid;
+      gap: 0.5rem;
+      align-content: start;
+      padding: var(--space-m);
+      border: 1px solid var(--line);
       border-radius: var(--radius);
-      border-block-end: 3px solid var(--leg);
-      filter: saturate(0.85);
-      transition: filter 0.3s;
+      background: var(--surface);
+      overflow: hidden;
     }
-    .legs li:hover img { filter: none; }
-    .legs figcaption { display: grid; gap: 0.2rem; font-size: var(--step--1); }
-    .leg-time { font-weight: 600; }
-    .leg-name { color: var(--leg); text-transform: uppercase; }
-
-    @media (width < 40rem) {
-      /* Leg photos become a swipeable strip instead of three tall stacked images. */
-        .legs {
-          grid-template-columns: none;
-          grid-auto-flow: column;
-          grid-auto-columns: 72%;
-          overflow-x: auto;
-          scroll-snap-type: x mandatory;
-          overscroll-behavior-x: contain;
-          padding-block-end: 0.5rem;
-        }
-        .legs li { scroll-snap-align: start; }
+    .step-n {
+      position: absolute;
+      inset-block-start: -0.15em;
+      inset-inline-end: 0.1em;
+      font-size: 6rem;
+      line-height: 1;
+      font-weight: 600;
+      color: var(--line);
+      pointer-events: none;
     }
+    .steps h3, .steps p { position: relative; }
 
-    .section-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--space-s); }
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
       gap: var(--space-s);
     }
+
+    .latest {
+      display: grid;
+      gap: 0.3rem;
+      padding: var(--space-m);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      text-decoration: none;
+      transition: border-color 0.15s;
+    }
+    .latest:hover { border-color: var(--accent); }
+    .latest strong { font-size: var(--step-1); line-height: 1.2; }
+    .latest-date { color: var(--accent); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    .watch {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+      gap: var(--space-l);
+      align-items: center;
+      padding: var(--space-l) var(--space-m);
+      border-radius: calc(var(--radius) * 2);
+      background:
+        radial-gradient(circle at 25% 50%, oklch(80% 0.17 75 / 0.12), transparent 60%),
+        var(--surface);
+      border: 1px solid var(--line);
+    }
+    .watch-preview { min-inline-size: 0; }
+    .watch-copy { --stack-gap: var(--space-s); }
+
+    .about {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+      gap: var(--space-l);
+      align-items: center;
+    }
+    .about figure { margin: 0; aspect-ratio: 4 / 3; overflow: hidden; border-radius: var(--radius); border: 1px solid var(--line); }
+    .about img { inline-size: 100%; block-size: 100%; object-fit: cover; object-position: 72% 30%; }
   }
 </style>

@@ -1,0 +1,120 @@
+---
+import Base from '../layouts/Base.astro';
+import Signup from '../components/Signup.astro';
+import WatchFacePreview from '../components/watchface/WatchFacePreview';
+import { watchFaces } from '../data/watchFaces';
+---
+<Base title="Watch faces" description="Custom watch faces for triathletes, starting with SD Digital Tri for Garmin: weekly swim, bike and run rings, an LCD time panel and a race-day countdown.">
+  <Fragment slot="head">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" />
+  </Fragment>
+
+  <header class="wrap section intro stack">
+    <p class="label">Watch faces</p>
+    <h1>Faces built for training</h1>
+    <p class="lede muted">
+      I design watch faces around what I actually check mid-week: how much swimming, riding and running I’ve done, and
+      how long until race day. They start on Garmin, with more watches to come.
+    </p>
+  </header>
+
+  {watchFaces.map((face) => (
+    <section class="wrap face" id={face.id} aria-labelledby={`${face.id}-name`}>
+      <div class="preview">
+        <WatchFacePreview client:visible label={`${face.name}, live preview`} />
+        <p class="mono sample">Live, in your time zone. Steps, weather and weekly totals are sample data.</p>
+      </div>
+
+      <div class="details stack">
+        <p class="mono chips">
+          <span>{face.brand}</span><span>{face.platform}</span>{face.price && <span>{face.price}</span>}
+        </p>
+        <h2 id={`${face.id}-name`}>{face.name}</h2>
+        <p class="lede muted">{face.tagline}</p>
+
+        <div class="get">
+          {face.status === 'available' && face.storeUrl ? (
+            <a class="button" href={face.storeUrl}>Get it on the {face.platform} Store <span class="arrow" aria-hidden="true">→</span></a>
+          ) : (
+            <>
+              <span class="button" aria-disabled="true">Coming soon to the {face.platform} Store</span>
+              <a class="button ghost" href="/newsletter/">Tell me when it’s out</a>
+            </>
+          )}
+        </div>
+        <p class="mono fits">Built for: {face.devices.join(', ')}</p>
+
+        <ul class="features">
+          {face.features.map((f) => (
+            <li>
+              <h3>{f.title}</h3>
+              <p class="muted">{f.body}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  ))}
+
+  <section class="wrap section next stack" aria-labelledby="next-heading">
+    <p class="label">Next up</p>
+    <h2 id="next-heading">Other watches</h2>
+    <p class="muted">
+      Garmin is first because it’s what I race with. If you want a face for another brand, tell me which one when you
+      sign up for the newsletter, and I’ll build where the demand is.
+    </p>
+  </section>
+
+  <div class="wrap section">
+    <Signup />
+  </div>
+</Base>
+
+<style>
+  @layer components {
+    .intro { --stack-gap: var(--space-s); padding-block-end: var(--space-m); }
+    .lede { font-size: var(--step-1); line-height: 1.5; }
+    .face {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+      gap: var(--space-l);
+      align-items: start;
+      padding-block: var(--space-l);
+    }
+    .preview {
+      position: sticky;
+      inset-block-start: 6rem;
+      display: grid;
+      gap: var(--space-s);
+      justify-items: center;
+      padding: var(--space-l) var(--space-s);
+      border-radius: calc(var(--radius) * 2);
+      background: radial-gradient(circle at 50% 40%, oklch(80% 0.17 75 / 0.12), transparent 65%), var(--surface);
+      border: 1px solid var(--line);
+    }
+    @media (width < 52rem) { .preview { position: static; } }
+    .sample { font-size: 0.75rem; color: var(--ink-faint); text-align: center; }
+    .details { --stack-gap: var(--space-s); }
+    .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    .chips span { padding: 0.25em 0.6em; border: 1px solid var(--line); border-radius: 999px; color: var(--ink-muted); }
+    .details h2 { font-size: var(--step-3); }
+    .get { display: flex; flex-wrap: wrap; gap: var(--space-s); padding-block: var(--space-s) 0; }
+    .fits { font-size: 0.8rem; color: var(--ink-faint); }
+    .features {
+      list-style: none;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-block-start: var(--space-m);
+    }
+    .features li { background: var(--bg); padding: var(--space-m); display: grid; gap: 0.4rem; align-content: start; }
+    .features h3 { font-size: var(--step-0); text-transform: uppercase; font-stretch: 85%; }
+    .features p { font-size: var(--step--1); }
+    .next { --stack-gap: var(--space-s); }
+  }
+</style>

@@ -1,0 +1,39 @@
+@layer components {
+  .wf { margin: 0; display: grid; gap: var(--space-s); justify-items: center; }
+  .wf-bezel {
+    inline-size: min(100%, 26rem);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    padding: 5.5%;
+    background: radial-gradient(circle at 30% 25%, #5b616b 0%, #2a2e35 38%, #15181d 70%, #3a3f47 100%);
+    box-shadow: 0 1.5rem 3.5rem rgb(0 0 0 / 0.55), inset 0 0 0 1px rgb(255 255 255 / 0.08);
+    transition: filter 0.4s;
+  }
+  .wf-bezel canvas {
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #000;
+  }
+  .wf-bezel[data-aod] { filter: brightness(0.9); }
+  .wf-modes {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+  }
+  .wf-modes button {
+    border: 0;
+    background: transparent;
+    color: var(--ink-muted);
+    padding: 0.45em 1em;
+    border-radius: 999px;
+    cursor: pointer;
+    min-block-size: 2.25rem;
+  }
+  .wf-modes button[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); }
+}

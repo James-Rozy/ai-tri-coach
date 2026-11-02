@@ -1,0 +1,84 @@
+---
+import Base from '../layouts/Base.astro';
+import Signup from '../components/Signup.astro';
+
+const inside = [
+  { label: 'The episode', body: 'The new video, and the training behind it.' },
+  { label: 'One prompt', body: 'A prompt I actually used that fortnight, ready to copy into your own coach.' },
+  { label: 'The numbers', body: 'Hours, sessions done and missed, and what my coach changed because of them.' },
+  { label: 'The miss', body: 'Whatever went wrong, and what I’m changing because of it.' },
+];
+---
+<Base title="Newsletter" description="Every other Sunday: the new episode, one coaching prompt you can copy, and the real numbers from my Ironman build.">
+  <section class="wrap section hero">
+    <div class="stack copy">
+      <p class="label">Newsletter · every other Sunday</p>
+      <h1>Two weeks of training, in one email.</h1>
+      <p class="lede muted">
+        Short, honest and useful even if you never watch the videos. Free, and one click to leave.
+      </p>
+      <Signup variant="bare" />
+    </div>
+
+    <div class="issue mono" aria-label="What’s in each issue">
+      <div class="issue-head"><span>Issue format</span><span>Every other Sunday</span></div>
+      <ol>
+        {inside.map((x, i) => (
+          <li>
+            <span class="lap">Lap {i + 1}</span>
+            <strong>{x.label}</strong>
+            <span class="body">{x.body}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+</Base>
+
+<style>
+  @layer components {
+    .hero {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+      gap: var(--space-l);
+      align-items: center;
+      min-block-size: 70vh;
+    }
+    .copy { --stack-gap: var(--space-m); }
+    .lede { font-size: var(--step-1); line-height: 1.5; }
+    .issue {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: var(--space-m);
+      font-size: var(--step--1);
+      rotate: 1.5deg;
+      box-shadow: 0 2rem 4rem rgb(0 0 0 / 0.35);
+      transition: rotate 0.3s;
+    }
+    .issue:hover { rotate: 0deg; }
+    .issue-head {
+      display: flex;
+      justify-content: space-between;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      padding-block-end: 0.6rem;
+      border-block-end: 1px dashed var(--line);
+    }
+    ol { list-style: none; padding: 0; margin: 0; }
+    li {
+      display: grid;
+      grid-template-columns: 4rem 1fr;
+      grid-template-areas: "lap label" "lap body";
+      gap: 0.15rem var(--space-s);
+      padding-block: 0.8rem;
+      border-block-end: 1px solid var(--line);
+    }
+    li:last-child { border: 0; padding-block-end: 0; }
+    .lap { grid-area: lap; color: var(--accent); text-transform: uppercase; font-size: 0.75rem; padding-block-start: 0.2em; }
+    strong { grid-area: label; font-family: var(--font-display); font-stretch: 75%; font-weight: 900; text-transform: uppercase; font-size: var(--step-1); }
+    .body { grid-area: body; color: var(--ink-muted); font-family: var(--font-sans); }
+  }
+</style>

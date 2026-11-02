@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import Disclaimer from '../components/Disclaimer.astro';
+import Logo from '../components/Logo.astro';
 
 interface Props {
   title: string;
@@ -9,14 +10,23 @@ interface Props {
 
 const {
   title,
-  description = 'Prompts and a setup for using Claude as your coach in any sport, tested in public on my build to a first Ironman.',
+  description = 'Set up an AI coach that plans from your own data and tells you when you are off track. A free guide for any sport, tested in public on my build to a first Ironman.',
 } = Astro.props;
+
+const nav = [
+  { href: '/guide/', label: 'Guide' },
+  { href: '/progress/', label: 'My progress' },
+  { href: '/watch-faces/', label: 'Watch faces' },
+  { href: '/about/', label: 'About' },
+];
 const socials = [
   { name: 'YouTube', href: 'https://www.youtube.com/@splitdecisionscoach' },
   { name: 'Instagram', href: 'https://www.instagram.com/splitdecisionscoach/' },
   { name: 'TikTok', href: 'https://www.tiktok.com/@splitdecisionscoach' },
 ];
-const fullTitle = title === 'Home' ? 'Split Decisions' : `${title} · Split Decisions`;
+const path = Astro.url.pathname;
+const isCurrent = (href: string) => path === href || path.startsWith(href);
+const fullTitle = title === 'Home' ? 'Split Decisions · Build your own AI coach' : `${title} · Split Decisions`;
 ---
 <!doctype html>
 <html lang="en">
@@ -24,6 +34,8 @@ const fullTitle = title === 'Home' ? 'Split Decisions' : `${title} · Split Deci
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -31,78 +43,144 @@ const fullTitle = title === 'Home' ? 'Split Decisions' : `${title} · Split Deci
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=JetBrains+Mono:wght@400;600&display=swap"
     />
+    <slot name="head" />
     <title>{fullTitle}</title>
   </head>
   <body>
-    <header class="site-header wrap">
-      <a href="/" class="brand">
-        <span class="bib" aria-hidden="true">BIB 2073</span>
-        <span>Split Decisions</span>
-      </a>
-      <nav aria-label="Main">
-        <a href="/kit/">Starter kit</a>
-        <a href="/#signup">Newsletter</a>
-      </nav>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap bar">
+        <a href="/" class="brand" aria-label="Split Decisions, home"><Logo /></a>
+        <nav aria-label="Main">
+          <ul>
+            {nav.map((item) => (
+              <li><a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>{item.label}</a></li>
+            ))}
+          </ul>
+          <a class="cta" href="/newsletter/" aria-current={isCurrent('/newsletter/') ? 'page' : undefined}>Newsletter</a>
+        </nav>
+      </div>
     </header>
-    <main>
+    <main id="main">
       <slot />
     </main>
-    <footer class="site-footer wrap stack">
-      <Disclaimer />
-      <nav class="socials mono" aria-label="Split Decisions elsewhere">
-        <span class="handle">@splitdecisionscoach</span>
-        <ul>
-          {socials.map((s) => <li><a href={s.href} rel="me">{s.name}</a></li>)}
-        </ul>
-      </nav>
-      <p class="muted">&copy; {new Date().getFullYear()} James Rozy</p>
+    <footer class="site-footer">
+      <div class="wrap foot">
+        <div class="stack">
+          <a href="/" class="brand" aria-label="Split Decisions, home"><Logo /></a>
+          <p class="muted">Build an AI coach that works from your data. Tested in public on an Ironman.</p>
+        </div>
+        <nav aria-label="Footer">
+          <ul>
+            {nav.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+            <li><a href="/newsletter/">Newsletter</a></li>
+          </ul>
+        </nav>
+        <nav class="socials" aria-label="Split Decisions elsewhere">
+          <span class="handle mono">@splitdecisionscoach</span>
+          <ul>
+            {socials.map((s) => <li><a href={s.href} rel="me">{s.name}</a></li>)}
+          </ul>
+        </nav>
+      </div>
+      <div class="wrap fine stack">
+        <Disclaimer />
+        <p class="muted">&copy; {new Date().getFullYear()} James Rozy</p>
+      </div>
     </footer>
   </body>
 </html>
 
 <style>
   @layer components {
-    .site-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--space-s);
-      padding-block: var(--space-s);
-    }
-    .site-header { border-block-end: 1px solid var(--line); }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-weight: 800;
-      font-stretch: 112%;
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
-      text-decoration: none;
-      view-transition-name: brand;
-    }
-    .socials { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-s); font-size: var(--step--1); }
-    .handle { color: var(--accent); }
-    .socials ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-s); }
-    .bib {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      font-weight: 600;
+    .skip {
+      position: absolute;
+      inset-block-start: -10rem;
+      inset-inline-start: var(--gutter);
+      padding: 0.5em 1em;
       background: var(--accent);
       color: var(--on-accent);
-      padding: 0.25em 0.5em;
-      border-radius: 4px;
-      letter-spacing: 0;
+      z-index: 10;
     }
-    nav { display: flex; gap: var(--space-m); font-size: var(--step--1); white-space: nowrap; }
-    .brand { white-space: nowrap; }
-    @media (width < 30rem) { .bib { display: none; } }
+    .skip:focus { inset-block-start: 0.5rem; }
+
+    .site-header {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 5;
+      background: rgb(14 17 22 / 0.82);
+      backdrop-filter: blur(10px);
+      border-block-end: 1px solid var(--line);
+    }
+    .bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem var(--space-m);
+      padding-block: 0.8rem;
+    }
+    .brand { text-decoration: none; font-size: 1.05rem; view-transition-name: brand; }
+    nav ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.25rem var(--space-m); }
     nav a { text-decoration: none; }
-    nav a:hover { color: var(--accent); }
+    .bar nav { display: flex; align-items: center; gap: var(--space-m); font-size: var(--step--1); }
+    .bar nav ul a {
+      position: relative;
+      color: var(--ink-muted);
+      padding-block: 0.35rem;
+      white-space: nowrap;
+    }
+    /* The current page gets a timing-mat strip under it; hover previews it. */
+    .bar nav ul a::after {
+      content: "";
+      position: absolute;
+      inset-inline: 0;
+      inset-block-end: -2px;
+      block-size: 2px;
+      background: repeating-linear-gradient(90deg, var(--accent) 0 6px, transparent 6px 9px);
+      scale: 0 1;
+      transform-origin: left;
+      transition: scale 0.25s ease-out;
+    }
+    .bar nav ul a:hover, .bar nav ul a[aria-current] { color: var(--ink); }
+    .bar nav ul a:hover::after, .bar nav ul a[aria-current]::after { scale: 1 1; }
+    .cta {
+      padding: 0.45em 1em;
+      border-radius: 999px;
+      box-shadow: inset 0 0 0 1px var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .cta:hover, .cta[aria-current] { background: var(--accent); color: var(--on-accent); }
+
+    /* Phones: the links become a swipeable row under the logo. */
+    /* Phones: logo and Newsletter on top, the links as a swipeable row underneath. */
+    @media (width < 52rem) {
+      .bar { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "brand cta" "links links"; }
+      .bar .brand { grid-area: brand; }
+      .bar nav { display: contents; }
+      .bar nav ul { grid-area: links; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: var(--space-m); }
+      .cta { grid-area: cta; }
+    }
+
     .site-footer {
       border-block-start: 1px solid var(--line);
       padding-block: var(--space-l);
       font-size: var(--step--1);
+      display: grid;
+      gap: var(--space-l);
     }
+    .foot {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+      gap: var(--space-m);
+      align-items: start;
+    }
+    .foot nav ul { flex-direction: column; gap: 0.4rem; }
+    .foot a:hover { color: var(--accent); }
+    .socials { display: grid; gap: 0.4rem; }
+    .handle { color: var(--accent); }
+    .fine { border-block-start: 1px solid var(--line); padding-block-start: var(--space-m); }
   }
 </style>
