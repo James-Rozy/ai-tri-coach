@@ -57,6 +57,7 @@ const inside = [
       transition: rotate 0.3s;
     }
     .issue:hover { rotate: 0deg; }
+    @media (width < 40rem) { .issue { rotate: 0deg; } }
     .issue-head {
       display: flex;
       justify-content: space-between;
