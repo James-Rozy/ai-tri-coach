@@ -51,7 +51,7 @@ const steps = [
     </div>
 
     <nav class="board mono" aria-label="What’s on Split Decisions">
-      <div class="board-head"><span>Course map</span><span class="clock" aria-hidden="true">00<i>:</i>00<i>:</i>00</span></div>
+      <div class="board-head"><span>Course map</span><span class="clock" aria-hidden="true"><span>00</span><i>:</i><span>00</span><i>:</i><span>00</span></span></div>
       <ol>
         {course.map((c, i) => (
           <li style={`--leg: ${c.color}; --i: ${i}`}>
@@ -76,14 +76,17 @@ const steps = [
 
   <script>
     // The board's race clock counts up from when the page opened.
-    const clock = document.querySelector<HTMLElement>('.clock');
-    if (clock && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      const start = performance.now();
+    // A number changing isn't motion, so it ticks even with Reduce Motion on (only the colon blink stops).
+    // Only the digits' text changes, so the scoped styles on the colons keep applying.
+    const digits = document.querySelectorAll<HTMLElement>('.clock > span');
+    if (digits.length === 3) {
+      const start = Date.now();
       const pad = (n: number) => String(n).padStart(2, '0');
-      setInterval(() => {
-        const s = Math.floor((performance.now() - start) / 1000);
-        clock.innerHTML = [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60].map(pad).join('<i>:</i>');
-      }, 1000);
+      const tick = () => {
+        const s = Math.floor((Date.now() - start) / 1000);
+        [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60].forEach((n, i) => (digits[i].textContent = pad(n)));
+      };
+      setInterval(tick, 1000);
     }
   </script>
 
@@ -223,7 +226,10 @@ const steps = [
       border-block-end: 1px dashed var(--line);
     }
     .clock { color: var(--accent); }
-    .clock i { font-style: normal; animation: blink 1s steps(2) infinite; }
+    .clock i { font-style: normal; }
+    @media (prefers-reduced-motion: no-preference) {
+      .clock i { animation: blink 1s steps(2) infinite; }
+    }
     @keyframes blink { 50% { opacity: 0.2; } }
     .board ol { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.4rem; }
     .board a {
@@ -255,7 +261,7 @@ const steps = [
     @keyframes split-in { from { opacity: 0; translate: -0.75rem 0; clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
 
     .section-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: var(--space-s); }
-    .section-head > a, .stack > p > a:not(.button) { text-decoration: none; color: var(--accent); font-weight: 600; }
+    .section-head > a, .stack > p > a:not(.button) { display: inline-block; padding-block: 0.6rem; text-decoration: none; color: var(--accent); font-weight: 600; }
 
     .steps {
       list-style: none;
@@ -280,7 +286,7 @@ const steps = [
       position: absolute;
       inset-block-start: -0.15em;
       inset-inline-end: 0.1em;
-      font-size: 6rem;
+      font-size: clamp(4rem, 3rem + 4vw, 6rem);
       line-height: 1;
       font-weight: 600;
       color: var(--line);

@@ -92,7 +92,7 @@ const fmt = (d: string) =>
       pointer-events: none;
     }
     .you span {
-      font-size: 0.7rem;
+      font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       background: var(--accent);
@@ -106,7 +106,9 @@ const fmt = (d: string) =>
       inline-size: 2px;
       block-size: 1.6rem;
       background: var(--accent);
-      animation: blink 1.2s steps(2) infinite;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .you::after { animation: blink 1.2s steps(2) infinite; }
     }
     @keyframes blink { 50% { opacity: 0.25; } }
     .season:has(.you) .you { inset-inline-start: clamp(3.5rem, calc(var(--now) * 100%), calc(100% - 3.5rem)); }

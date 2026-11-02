@@ -137,7 +137,9 @@ const timeline = [
     @keyframes slide { from { opacity: 0; translate: -1rem 0; } }
 
     .inline-photo { margin: var(--space-m) 0 0; display: grid; gap: 0.5rem; }
-    .inline-photo img { inline-size: 100%; block-size: auto; aspect-ratio: 16 / 10; object-fit: cover; border-radius: var(--radius); }
+    /* The swim photo is portrait: keep the top of the frame (my head) whatever the crop. */
+    .inline-photo img { inline-size: 100%; block-size: auto; aspect-ratio: 16 / 10; object-fit: cover; object-position: 50% 12%; border-radius: var(--radius); }
+    @media (width < 40rem) { .inline-photo img { aspect-ratio: 4 / 5; } }
     .inline-photo figcaption { font-size: var(--step--1); }
   }
 </style>
