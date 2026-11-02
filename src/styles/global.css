@@ -81,7 +81,8 @@
 
   @media (prefers-reduced-motion: reduce) {
     @view-transition { navigation: none; }
-    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    /* [data-reduced-motion-ok] opts out an element whose animation is a brief color change, not movement (the logo). */
+    *:not([data-reduced-motion-ok] *), *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
 }
 

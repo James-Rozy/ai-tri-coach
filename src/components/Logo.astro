@@ -7,7 +7,7 @@ interface Props {
 }
 const { wordmark = true } = Astro.props;
 ---
-<span class="logo">
+<span class="logo" data-reduced-motion-ok>
   <svg class="mark" viewBox="0 0 119 92" aria-hidden="true">
     <rect class="panel" x="1" y="1" width="117" height="90" rx="12" />
     <g transform="translate(13 9)"><polygon points="6.8,5.0 11.8,0.0 30.2,0.0 35.2,5.0 30.2,10.0 11.8,10.0" class="on"/><polygon points="37.0,6.8 42.0,11.8 42.0,30.2 37.0,35.2 32.0,30.2 32.0,11.8" class="off"/><polygon points="37.0,38.8 42.0,43.8 42.0,62.2 37.0,67.2 32.0,62.2 32.0,43.8" class="on"/><polygon points="6.8,69.0 11.8,64.0 30.2,64.0 35.2,69.0 30.2,74.0 11.8,74.0" class="on"/><polygon points="5.0,38.8 10.0,43.8 10.0,62.2 5.0,67.2 0.0,62.2 0.0,43.8" class="off"/><polygon points="5.0,6.8 10.0,11.8 10.0,30.2 5.0,35.2 0.0,30.2 0.0,11.8" class="on"/><polygon points="6.8,37.0 11.8,32.0 30.2,32.0 35.2,37.0 30.2,42.0 11.8,42.0" class="on"/><polygon points="57.8,5.0 62.8,0.0 81.2,0.0 86.2,5.0 81.2,10.0 62.8,10.0" class="on"/><polygon points="88.0,6.8 93.0,11.8 93.0,30.2 88.0,35.2 83.0,30.2 83.0,11.8" class="on"/><polygon points="88.0,38.8 93.0,43.8 93.0,62.2 88.0,67.2 83.0,62.2 83.0,43.8" class="on"/><polygon points="57.8,69.0 62.8,64.0 81.2,64.0 86.2,69.0 81.2,74.0 62.8,74.0" class="on"/><polygon points="56.0,38.8 61.0,43.8 61.0,62.2 56.0,67.2 51.0,62.2 51.0,43.8" class="off"/><polygon points="56.0,6.8 61.0,11.8 61.0,30.2 56.0,35.2 51.0,30.2 51.0,11.8" class="off"/><polygon points="57.8,37.0 62.8,32.0 81.2,32.0 86.2,37.0 81.2,42.0 62.8,42.0" class="off"/><polygon points="72.0,6.8 77.0,11.8 77.0,30.2 72.0,35.2 67.0,30.2 67.0,11.8" class="on"/><polygon points="72.0,38.8 77.0,43.8 77.0,62.2 72.0,67.2 67.0,62.2 67.0,43.8" class="on"/></g>
@@ -30,13 +30,14 @@ const { wordmark = true } = Astro.props;
       text-transform: uppercase;
       white-space: nowrap;
     }
-    /* Lit segments flicker on once, like an LCD waking up. Hovering the logo replays it. */
-    @media (prefers-reduced-motion: no-preference) {
-      .on { animation: lcd-on 0.9s steps(1) both; }
-      .on:nth-of-type(3n) { animation-delay: 0.08s; }
-      .on:nth-of-type(3n + 1) { animation-delay: 0.16s; }
-      :global(a:hover) > .logo .on { animation-name: lcd-on-again; }
-    }
+    /* Lit segments flicker on once, like an LCD waking up; hovering or tapping the logo replays it.
+       It's a color change in place, not movement, and only two blinks under a second, so it also runs with
+       Reduce Motion on (phones included). data-reduced-motion-ok opts it out of the global rule
+       in global.css that shortens every animation to nothing. */
+    .on { animation: lcd-on 0.9s steps(1) both; }
+    .on:nth-of-type(3n) { animation-delay: 0.08s; }
+    .on:nth-of-type(3n + 1) { animation-delay: 0.16s; }
+    :global(a:hover) > .logo .on, :global(a:active) > .logo .on { animation-name: lcd-on-again; }
     @keyframes lcd-on {
       0% { fill: var(--lcd-ghost); }
       30% { fill: var(--accent); }

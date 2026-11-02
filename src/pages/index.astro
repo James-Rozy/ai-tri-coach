@@ -148,8 +148,7 @@ const steps = [
         <h2 id="watch-heading">Your training week, on your wrist</h2>
         <p class="muted">
           {watchFaces[0].name} is the face I wear every day: swim, bike and run rings that fill toward your weekly
-          targets, an LCD panel for the time, and a countdown to race day. It’s live on the left, ticking in your time
-          zone.
+          targets, an LCD panel for the time, and a countdown to race day. This one’s live, ticking in your time zone.
         </p>
         <p><a class="button" href="/watch-faces/">See the watch faces <span class="arrow" aria-hidden="true">→</span></a></p>
       </div>
@@ -203,6 +202,8 @@ const steps = [
     @keyframes underline { from { background-size: 0 0.08em; } }
     .lede { font-size: var(--step-1); line-height: 1.5; }
     .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-s); }
+    .actions .button { flex: 1 1 auto; justify-content: center; }
+    @media (width >= 40rem) { .actions .button { flex: none; } }
 
     /* Timing board: each section of the site is a split. */
     .board {
