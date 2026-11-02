@@ -1,16 +1,17 @@
 # Split Decisions watch face
 
-A Connect IQ watch face for the Garmin Fēnix 9 Pro 47mm (454×454 AMOLED), in the site's Race Timing look. The approved design is the [mockup](https://claude.ai/artifact/HjvifodYnxCwp42sEF1FZk); the code follows its pixel positions.
+A Connect IQ watch face for the Garmin Fēnix 9 Pro 47mm (454×454 AMOLED), laid out like a digital sports watch from James's sketch, in the site's Race Timing colors. The design is the [mockup](https://claude.ai/artifact/HjvifodYnxCwp42sEF1FZk); the code follows its pixel positions.
 
-**Two edge gauges**, facing each other and flush with the bezel:
-- **Top (10:30 to 1:30):** heart rate, filling left to right from your resting HR to your max in the current zone's color, with notches at the zone lines. Zones and max come from your Garmin HR zones.
-- **Bottom (7:30 to 4:30):** this week's training hours by sport (swim, bike, run colors), filling left to right toward your weekly target.
+- **LCD panel (center):** a bordered panel with the day of the week and the date (month-day) on top, then the time, AM/PM and amber seconds. Unlit segments show faintly behind the digits.
+- **Sport rings (top):** swim, bike and run. Each ring fills from 12 o'clock toward that sport's weekly time target. Inside are the icon, the week's distance and the week's time.
+- **Left:** phone connected, do not disturb, alarm set. Lit when on, faint when off.
+- **Right:** a wind dial (the arrow points where the wind is blowing) with its speed, the temperature, and a bezel gauge from 4:30 to 1:30 that fills with the temperature (0 to 100°F): blue when it's cold, amber when it's mild, red when it's hot.
+- **Under the panel:** steps, watch battery, heart rate.
+- **Bottom bezel:** days to race day, with "DAYS UNTIL RACE" curved along the bezel. The word after "DAYS UNTIL" is a setting.
 
-**Center, top to bottom:** heart rate tucked into the top gauge at 12 o'clock, steps and weather to either side with an icon over each, a large segment clock with amber seconds and the date stacked on its left (day over month and day), days to race day, swim/bike/run distance with sport icons, and the week total.
+**Always-on:** the panel outline, the time and the date only, dimmed. Every other pixel row is blacked out (alternating each minute) and the layout drifts a few pixels each minute, to stay inside Garmin's AMOLED burn-in rules.
 
-**Always-on:** time and date (in the same spot) and thin gauges only, dimmed. Every other pixel row is blacked out (alternating each minute) and the layout drifts a few pixels each minute, to stay inside Garmin's AMOLED burn-in rules.
-
-The weekly numbers come from activities recorded on the watch since Monday. Anything logged elsewhere, like polo added by hand on Strava, won't count.
+The rings count activities recorded on the watch since Monday. Anything logged elsewhere, like polo added by hand on Strava, won't count.
 
 ## Settings
 
@@ -18,8 +19,9 @@ Garmin Connect app → the watch → Watch Faces → Split Decisions → Setting
 
 | Setting | Default |
 | --- | --- |
-| Weekly training target (hours) | 7 |
+| Weekly swim / bike / run target (minutes) | 80 / 180 / 150 |
 | Race date (YYYY-MM-DD) | 2027-09-19 (placeholder; the 2027 date isn't confirmed) |
+| Countdown label (after "DAYS UNTIL") | RACE |
 
 ## Run it in the simulator
 
@@ -38,7 +40,7 @@ Sideloaded faces can't be changed from Garmin Connect, so the settings only work
 
 ## Changing fonts
 
-Text and numbers use Garmin's built-in scalable Roboto Condensed (`Graphics.getVectorFont`), which the watch draws smoothly at any size. Bitmap fonts compiled from Archivo and JetBrains Mono (SIL Open Font License, in `tools/fonts/`) came out jagged on the watch, so they're only a fallback for watches without scalable fonts. The clock's seven-segment digits and the icons are generated as bitmaps from the same geometry as the mockup.
+Text and numbers use Garmin's built-in scalable Roboto Condensed (`Graphics.getVectorFont`), which the watch draws smoothly at any size. Bitmap fonts compiled from Archivo and JetBrains Mono (SIL Open Font License, in `tools/fonts/`) came out jagged on the watch, so they're only a fallback for watches without scalable fonts. The LCD panel's seven- and fourteen-segment glyphs and the icons are generated as bitmaps from the same geometry as the mockup.
 
 ```sh
 python3 -m pip install pillow

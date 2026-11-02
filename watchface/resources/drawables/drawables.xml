@@ -4,6 +4,13 @@
     <bitmap id="IconBike" filename="icon_bike.png"/>
     <bitmap id="IconRun" filename="icon_run.png"/>
     <bitmap id="IconSteps" filename="icon_steps.png"/>
-    <bitmap id="IconTemp" filename="icon_temp.png"/>
+    <bitmap id="IconBattery" filename="icon_battery.png"/>
     <bitmap id="IconHeart" filename="icon_heart.png"/>
+    <bitmap id="IconTemp" filename="icon_temp.png"/>
+    <bitmap id="IconBt" filename="icon_bt.png"/>
+    <bitmap id="IconBtOff" filename="icon_bt_off.png"/>
+    <bitmap id="IconDnd" filename="icon_dnd.png"/>
+    <bitmap id="IconDndOff" filename="icon_dnd_off.png"/>
+    <bitmap id="IconAlarm" filename="icon_alarm.png"/>
+    <bitmap id="IconAlarmOff" filename="icon_alarm_off.png"/>
 </drawables>

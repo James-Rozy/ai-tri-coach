@@ -2,8 +2,8 @@
 
 Connect IQ can't use TTF fonts directly, so this renders the brand faces
 (Archivo Condensed Black and JetBrains Mono) into BMFont text files plus PNG
-glyph sheets. The clock digits are drawn as seven-segment glyphs from the same
-geometry as the design mockup. Digits share one advance so numbers don't jiggle.
+glyph sheets. The LCD panel's digits and letters are drawn as seven- and
+fourteen-segment glyphs from the same geometry as the design mockup. Digits share one advance so numbers don't jiggle.
 
     python3 -m pip install pillow
     python3 watchface/tools/make_assets.py
@@ -39,10 +39,14 @@ TEXT_FONTS = [
     ("mono_bold", MONO_SEMIBOLD, 14, TEXT_CHARS),
 ]
 
-# id, digit width, digit height, segment thickness (matches the mockup's segText calls)
+# id, glyph width, glyph height, segment thickness, characters (matches the mockup's segText calls).
+# Digits and "-" use seven segments, letters fourteen. A space is a blank digit-wide cell.
 SEGMENT_FONTS = [
-    ("seg_time", 54, 92, 12),
-    ("seg_secs", 16, 34, 4),
+    ("seg_time", 42, 62, 10, "0123456789: "),
+    ("seg_secs", 16, 28, 4, "0123456789"),
+    ("seg_date", 18, 30, 5, "0123456789-"),
+    ("seg_day", 26, 32, 4.5, "ADEFHIMNORSTUW"),
+    ("seg_ampm", 13, 20, 3, "AMP"),
 ]
 
 SHEET_W = 512
@@ -109,7 +113,12 @@ def build_text_font(name, path, size, chars):
 
 SEGMENTS = {
     "0": "abcdef", "1": "bc", "2": "abged", "3": "abgcd", "4": "fgbc",
-    "5": "afgcd", "6": "afgedc", "7": "abc", "8": "abcdefg", "9": "abcdfg",
+    "5": "afgcd", "6": "afgedc", "7": "abc", "8": "abcdefg", "9": "abcdfg", "-": "g", " ": "",
+    # Fourteen-segment letters: G and H are the two halves of the middle bar, i and l the center
+    # verticals, h j k m the diagonals (top-left, top-right, bottom-left, bottom-right).
+    "A": "abcefGH", "D": "abcdil", "E": "adefG", "F": "aefG", "H": "bcefGH", "I": "adil", "M": "bcefhj",
+    "N": "bcefhm", "O": "abcdef", "P": "abefGH", "R": "abefGHm", "S": "acdfGH", "T": "ail", "U": "bcdef",
+    "W": "bcefkm",
 }
 SUPERSAMPLE = 4
 
@@ -127,7 +136,24 @@ def segment_polys(w, h, t):
     def vert(x, y0, y1):
         return [(x, y0), (x + half, y0 + half), (x + half, y1 - half), (x, y1), (x - half, y1 - half), (x - half, y0 + half)]
 
+    cx = w / 2
+    d = t * 1.1
+
+    def diag(x0, y0, x1, y1):
+        dx, dy = x1 - x0, y1 - y0
+        length = (dx * dx + dy * dy) ** 0.5
+        nx, ny = -dy / length * t * 0.45, dx / length * t * 0.45
+        return [(x0 + nx, y0 + ny), (x1 + nx, y1 + ny), (x1 - nx, y1 - ny), (x0 - nx, y0 - ny)]
+
     return {
+        "G": horiz(left + g, cx - g, mid),
+        "H": horiz(cx + g, right - g, mid),
+        "i": vert(cx, top + g, mid - g),
+        "l": vert(cx, mid + g, bottom - g),
+        "h": diag(left + d, top + d, cx - t * 0.6, mid - t * 0.8),
+        "j": diag(right - d, top + d, cx + t * 0.6, mid - t * 0.8),
+        "k": diag(cx - t * 0.6, mid + t * 0.8, left + d, bottom - d),
+        "m": diag(cx + t * 0.6, mid + t * 0.8, right - d, bottom - d),
         "a": horiz(left + g, right - g, top),
         "b": vert(right, top + g, mid - g),
         "c": vert(right, mid + g, bottom - g),
@@ -138,14 +164,14 @@ def segment_polys(w, h, t):
     }
 
 
-def build_segment_font(name, w, h, t):
+def build_segment_font(name, w, h, t, chars):
     spacing = t * 0.9
     colon_w = t * 1.2
     polys = segment_polys(w, h, t)
     glyphs = []
-    for ch in DIGITS + ":":
+    for ch in chars:
         cell_w = colon_w if ch == ":" else w
-        big = Image.new("L", (round(cell_w * SUPERSAMPLE), h * SUPERSAMPLE), 0)
+        big = Image.new("L", (round(cell_w * SUPERSAMPLE), round(h * SUPERSAMPLE)), 0)
         draw = ImageDraw.Draw(big)
         if ch == ":":
             for cy in (h * 0.3, h * 0.7):
@@ -166,13 +192,22 @@ def build_segment_font(name, w, h, t):
 # Icons: geometry on a 16-unit grid in sport_icons.json (shared with the mockup).
 # (geometry key, drawable file name, pixel size, color)
 SPORT_ICONS = Path(__file__).resolve().parent / "sport_icons.json"
+OFF = (0x2A, 0x31, 0x3B)
 ICONS = [
     ("swim", "icon_swim", 20, (0x2E, 0xA4, 0xDC)),
     ("bike", "icon_bike", 20, (0xF2, 0x8E, 0x42)),
     ("run", "icon_run", 20, (0x35, 0xC1, 0x77)),
-    ("steps", "icon_steps", 24, INK),
-    ("temp", "icon_temp", 24, INK),
-    ("hr", "icon_heart", 24, (0xE5, 0x48, 0x4D)),
+    ("steps", "icon_steps", 20, INK),
+    ("battery", "icon_battery", 20, INK),
+    ("hr", "icon_heart", 20, (0xE5, 0x48, 0x4D)),
+    ("temp", "icon_temp", 18, INK),
+    # Status icons: lit when on, a faint copy when off.
+    ("bt", "icon_bt", 24, INK),
+    ("bt", "icon_bt_off", 24, OFF),
+    ("dnd", "icon_dnd", 24, INK),
+    ("dnd", "icon_dnd_off", 24, OFF),
+    ("alarm", "icon_alarm", 24, INK),
+    ("alarm", "icon_alarm_off", 24, OFF),
 ]
 ICON_SS = 8
 

@@ -1,8 +1,17 @@
 <settings>
-    <setting propertyKey="@Properties.TargetHours" title="@Strings.TargetTitle">
-        <settingConfig type="numeric" min="1" max="40"/>
+    <setting propertyKey="@Properties.SwimTarget" title="@Strings.SwimTargetTitle">
+        <settingConfig type="numeric" min="0" max="1200"/>
+    </setting>
+    <setting propertyKey="@Properties.BikeTarget" title="@Strings.BikeTargetTitle">
+        <settingConfig type="numeric" min="0" max="1200"/>
+    </setting>
+    <setting propertyKey="@Properties.RunTarget" title="@Strings.RunTargetTitle">
+        <settingConfig type="numeric" min="0" max="1200"/>
     </setting>
     <setting propertyKey="@Properties.RaceDate" title="@Strings.RaceDateTitle">
         <settingConfig type="alphaNumeric" maxLength="10"/>
+    </setting>
+    <setting propertyKey="@Properties.RaceLabel" title="@Strings.RaceLabelTitle">
+        <settingConfig type="alphaNumeric" maxLength="16"/>
     </setting>
 </settings>
