@@ -171,7 +171,10 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             var from = 225.0 - 90.0 * min(done, target) / target;
             done += _week.seconds[i] / 60;
             var to = 225.0 - 90.0 * min(done, target) / target;
-            drawClockArc(dc, from, to + 0.8, SPORT_COLORS[i], width);
+            // Skip sports with no time yet, or the 0.8 degree overlap draws a stray dot at 7:30.
+            if (to < from) {
+                drawClockArc(dc, from, to + 0.8, SPORT_COLORS[i], width);
+            }
         }
     }
 

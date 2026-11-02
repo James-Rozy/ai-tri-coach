@@ -63,8 +63,10 @@ def pack(glyphs):
     for g in glyphs:
         if g["w"] and g["h"]:
             alpha.paste(g["img"], (g["x"], g["y"]))
-    sheet = Image.new("RGBA", (SHEET_W, sheet_h), (255, 255, 255, 0))
-    sheet.putalpha(alpha)
+    # Coverage goes in the color channels as well as alpha (white premultiplied onto black).
+    # The Connect IQ font compiler shades glyphs from the color, so white-everywhere RGB
+    # came out as hard, heavy 1-bit edges in the simulator.
+    sheet = Image.merge("RGBA", (alpha, alpha, alpha, alpha))
     return sheet
 
 
@@ -197,8 +199,14 @@ def build_sport_icons():
                         w = e["w"] * k
                         draw.ellipse((cx - r - w / 2, cy - r - w / 2, cx + r + w / 2, cy + r + w / 2), outline=ink, width=round(w))
             alpha = mask.resize((size, size), Image.LANCZOS)
-            img = Image.new("RGBA", (size, size), SPORT_COLORS[key] + (0,))
-            img.putalpha(alpha)
+            # Premultiplied onto black, like the fonts, so edges stay smooth even if alpha is thresholded.
+            r, g, b = SPORT_COLORS[key]
+            img = Image.merge("RGBA", (
+                alpha.point(lambda v: v * r // 255),
+                alpha.point(lambda v: v * g // 255),
+                alpha.point(lambda v: v * b // 255),
+                alpha,
+            ))
             img.save(DRAW_OUT / f"icon_{key}_{suffix.lower()}.png")
 
 
