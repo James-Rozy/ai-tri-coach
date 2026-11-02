@@ -30,6 +30,10 @@ const DAY_NAMES = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const MONTH_NAMES = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 const WEEK_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
 
+// Garmin's built-in scalable font faces, first match wins. Condensed to match the race-board look.
+const BOLD_FACES = ["RobotoCondensedBold", "Swiss721Bold", "BionicBold"];
+const REGULAR_FACES = ["RobotoCondensedRegular", "Swiss721Regular", "RobotoCondensedBold"];
+
 // Always-on drift, one step per minute, so no pixel stays lit in one place.
 const AOD_SHIFTS = [[0, 0], [3, 2], [-2, 3], [-3, -2], [2, -3]];
 
@@ -47,10 +51,12 @@ class SplitDecisionsView extends WatchUi.WatchFace {
     private var _segTime as WatchUi.FontResource;
     private var _segSecs as WatchUi.FontResource;
     // Type scale: segment clock, _numData for every reading, _numDetail for the per-sport breakdown, mono 14 for labels and text.
-    private var _numData as WatchUi.FontResource;
-    private var _numDetail as WatchUi.FontResource;
-    private var _label as WatchUi.FontResource;
-    private var _bold as WatchUi.FontResource;
+    // Text uses Garmin's built-in scalable fonts, which the watch draws smoothly at any size.
+    // The bundled bitmap fonts compile without smoothing, so they're only a fallback.
+    private var _numData as Graphics.FontType;
+    private var _numDetail as Graphics.FontType;
+    private var _label as Graphics.FontType;
+    private var _bold as Graphics.FontType;
     // Swim, bike, run icons: large for the distance row, small for the week strip.
     private var _iconsLarge as Array<WatchUi.BitmapResource>;
     private var _iconsSmall as Array<WatchUi.BitmapResource>;
@@ -64,10 +70,10 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         WatchFace.initialize();
         _segTime = WatchUi.loadResource(Rez.Fonts.SegTime) as WatchUi.FontResource;
         _segSecs = WatchUi.loadResource(Rez.Fonts.SegSecs) as WatchUi.FontResource;
-        _numData = WatchUi.loadResource(Rez.Fonts.NumData) as WatchUi.FontResource;
-        _numDetail = WatchUi.loadResource(Rez.Fonts.NumDetail) as WatchUi.FontResource;
-        _label = WatchUi.loadResource(Rez.Fonts.MonoLabel) as WatchUi.FontResource;
-        _bold = WatchUi.loadResource(Rez.Fonts.MonoBold) as WatchUi.FontResource;
+        _numData = textFont(BOLD_FACES, 34, Rez.Fonts.NumData);
+        _numDetail = textFont(BOLD_FACES, 24, Rez.Fonts.NumDetail);
+        _label = textFont(REGULAR_FACES, 18, Rez.Fonts.MonoLabel);
+        _bold = textFont(BOLD_FACES, 20, Rez.Fonts.MonoBold);
         _iconsLarge = [
             WatchUi.loadResource(Rez.Drawables.SwimLarge) as WatchUi.BitmapResource,
             WatchUi.loadResource(Rez.Drawables.BikeLarge) as WatchUi.BitmapResource,
@@ -122,10 +128,10 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         drawTopRow(dc);
         drawWeekStrip(dc);
         drawClock(dc, clock, settings.is24Hour);
-        drawCentered(dc, y(298), _bold, dateText(Gregorian.info(Time.now(), Time.FORMAT_SHORT)), COLOR_MUTED);
+        drawCentered(dc, y(300), _bold, dateText(Gregorian.info(Time.now(), Time.FORMAT_SHORT)), COLOR_MUTED);
         var daysLeft = daysUntil(Application.Properties.getValue("RaceDate"), Gregorian.info(Time.now(), Time.FORMAT_SHORT));
         if (daysLeft != null && daysLeft >= 0) {
-            drawCentered(dc, y(324), _bold, daysLeft == 0 ? "RACE DAY" : daysLeft.toString() + (daysLeft == 1 ? " DAY" : " DAYS") + " TO RACE DAY", COLOR_INK);
+            drawCentered(dc, y(328), _bold, daysLeft == 0 ? "RACE DAY" : daysLeft.toString() + (daysLeft == 1 ? " DAY" : " DAYS") + " TO RACE DAY", COLOR_INK);
         }
         drawWeekSplits(dc);
     }
@@ -186,13 +192,13 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             var unit = distanceUnit(i, statute);
             var vw = dc.getTextWidthInPixels(value, _numDetail);
             var uw = dc.getTextWidthInPixels(unit, _label);
-            var colX = _cx + (((i - 1) * 96) * _s).toNumber();
-            var x0 = colX - (vw + 3 + uw - 19) / 2;
-            dc.drawBitmap(x0 - 19, y(356), _iconsLarge[i]);
-            drawBaseline(dc, x0, y(370), _numDetail, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
-            drawBaseline(dc, x0 + vw + 3, y(370), _label, unit, COLOR_FAINT, Graphics.TEXT_JUSTIFY_LEFT);
+            var colX = _cx + (((i - 1) * 112) * _s).toNumber();
+            var x0 = colX - (vw + 3 + uw - 22) / 2;
+            dc.drawBitmap(x0 - 22, y(356), _iconsLarge[i]);
+            drawBaseline(dc, x0, y(374), _numDetail, value, COLOR_INK, Graphics.TEXT_JUSTIFY_LEFT);
+            drawBaseline(dc, x0 + vw + 3, y(374), _label, unit, COLOR_FAINT, Graphics.TEXT_JUSTIFY_LEFT);
         }
-        drawRuns(dc, y(402), [
+        drawRuns(dc, y(412), [
             [formatMinutes(_week.totalMinutes()), _numData, COLOR_INK, 2],
             ["/" + (targetMinutes() / 60).toString() + "H", _label, COLOR_FAINT, 0]
         ]);
@@ -204,9 +210,9 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         var labels = ["STEPS", "WEATHER"];
         var values = [steps == null ? "--" : thousands(steps), temperature()];
         for (var i = 0; i < 2; i++) {
-            var colX = _cx + (((i - 0.5) * 110) * _s).toNumber();
-            drawBaseline(dc, colX, y(80), _label, labels[i], COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
-            drawBaseline(dc, colX, y(108), _numData, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+            var colX = _cx + (((i - 0.5) * 130) * _s).toNumber();
+            drawBaseline(dc, colX, y(82), _label, labels[i], COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
+            drawBaseline(dc, colX, y(115), _numData, values[i], COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
         }
     }
 
@@ -216,10 +222,10 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         for (var i = 0; i < 7; i++) {
             var lx = _cx + (((i - 3) * 30) * _s).toNumber();
             var color = i == todayIdx ? COLOR_ACCENT : (i > todayIdx ? COLOR_FAINT : COLOR_MUTED);
-            drawBaseline(dc, lx, y(150), _bold, WEEK_LETTERS[i], color, Graphics.TEXT_JUSTIFY_CENTER);
+            drawBaseline(dc, lx, y(155), _bold, WEEK_LETTERS[i], color, Graphics.TEXT_JUSTIFY_CENTER);
             if (i == todayIdx) {
                 dc.setColor(COLOR_ACCENT, Graphics.COLOR_TRANSPARENT);
-                dc.fillRectangle(lx - 7, y(155), 14, 2);
+                dc.fillRectangle(lx - 7, y(159), 14, 2);
             }
             var mask = _week.dayMask[i];
             var count = 0;
@@ -231,7 +237,7 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             var dx = lx - count * 13 / 2 + 1;
             for (var s = 0; s < 3; s++) {
                 if ((mask & (1 << s)) != 0) {
-                    dc.drawBitmap(dx, y(160), _iconsSmall[s]);
+                    dc.drawBitmap(dx, y(164), _iconsSmall[s]);
                     dx += 13;
                 }
             }
@@ -258,11 +264,11 @@ class SplitDecisionsView extends WatchUi.WatchFace {
 
         // Gauge readouts sit inside each side gauge at its midpoint (10 and 2 o'clock, radius 180).
         var bb = bodyBattery();
-        drawBaseline(dc, x(71), y(140), _numData, bb == null ? "--" : bb.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
-        drawBaseline(dc, x(71), y(156), _label, "BB", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, x(71), y(143), _numData, bb == null ? "--" : bb.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, x(71), y(162), _label, "BB", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
         var hr = heartRate();
-        drawBaseline(dc, x(383), y(140), _numData, hr == null ? "--" : hr.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
-        drawBaseline(dc, x(383), y(156), _label, "BPM", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, x(383), y(143), _numData, hr == null ? "--" : hr.toString(), COLOR_INK, Graphics.TEXT_JUSTIFY_CENTER);
+        drawBaseline(dc, x(383), y(162), _label, "BPM", COLOR_FAINT, Graphics.TEXT_JUSTIFY_CENTER);
     }
 
     // Wrist down: dimmed time and date with the gauges, then every other row blacked out
@@ -271,7 +277,7 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         var timeStr = hourText(clock.hour, System.getDeviceSettings().is24Hour) + ":" + clock.min.format("%02d");
         var tw = dc.getTextWidthInPixels(timeStr, _segTime);
         drawTop(dc, _cx - tw / 2, y(189), _segTime, timeStr, COLOR_MUTED);
-        drawCentered(dc, y(298), _bold, dateText(Gregorian.info(Time.now(), Time.FORMAT_SHORT)), COLOR_FAINT);
+        drawCentered(dc, y(300), _bold, dateText(Gregorian.info(Time.now(), Time.FORMAT_SHORT)), COLOR_FAINT);
 
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(false);
@@ -312,11 +318,16 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         return ZONE_COLORS[4];
     }
 
+    // Newest Body Battery reading. The latest sample is often empty, so walk back a few.
     private function bodyBattery() as Number? {
         if ((Toybox has :SensorHistory) && (SensorHistory has :getBodyBatteryHistory)) {
-            var sample = SensorHistory.getBodyBatteryHistory({:period => 1}).next();
-            if (sample != null && sample.data != null) {
-                return sample.data.toNumber();
+            var history = SensorHistory.getBodyBatteryHistory({:period => 10, :order => SensorHistory.ORDER_NEWEST_FIRST});
+            var sample = history.next();
+            while (sample != null) {
+                if (sample.data != null) {
+                    return sample.data.toNumber();
+                }
+                sample = history.next();
             }
         }
         return null;
@@ -461,22 +472,33 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         var total = 0;
         for (var i = 0; i < pieces.size(); i++) {
             var p = pieces[i];
-            total += dc.getTextWidthInPixels(p[0] as String, p[1] as WatchUi.FontResource) + (p[3] as Number);
+            total += dc.getTextWidthInPixels(p[0] as String, p[1] as Graphics.FontType) + (p[3] as Number);
         }
         var px = _cx - total / 2;
         for (var i = 0; i < pieces.size(); i++) {
             var p = pieces[i];
-            drawBaseline(dc, px, baseline, p[1] as WatchUi.FontResource, p[0] as String, p[2] as Number, Graphics.TEXT_JUSTIFY_LEFT);
-            px += dc.getTextWidthInPixels(p[0] as String, p[1] as WatchUi.FontResource) + (p[3] as Number);
+            drawBaseline(dc, px, baseline, p[1] as Graphics.FontType, p[0] as String, p[2] as Number, Graphics.TEXT_JUSTIFY_LEFT);
+            px += dc.getTextWidthInPixels(p[0] as String, p[1] as Graphics.FontType) + (p[3] as Number);
         }
     }
 
-    private function drawCentered(dc as Graphics.Dc, baseline as Number, font as WatchUi.FontResource, text as String, color as Number) as Void {
+    private function drawCentered(dc as Graphics.Dc, baseline as Number, font as Graphics.FontType, text as String, color as Number) as Void {
         drawBaseline(dc, _cx, baseline, font, text, color, Graphics.TEXT_JUSTIFY_CENTER);
     }
 
+    // A built-in scalable font at a pixel size, or the bundled bitmap font if this watch has none.
+    private function textFont(faces as Array<String>, size as Number, fallback as ResourceId) as Graphics.FontType {
+        if (Graphics has :getVectorFont) {
+            var font = Graphics.getVectorFont({:face => faces, :size => size});
+            if (font != null) {
+                return font;
+            }
+        }
+        return WatchUi.loadResource(fallback) as WatchUi.FontResource;
+    }
+
     // Text placed by its baseline, the way the mockup lays it out.
-    private function drawBaseline(dc as Graphics.Dc, px as Numeric, baseline as Numeric, font as WatchUi.FontResource,
+    private function drawBaseline(dc as Graphics.Dc, px as Numeric, baseline as Numeric, font as Graphics.FontType,
             text as String, color as Number, justify as Number) as Void {
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
         dc.drawText(px, baseline - Graphics.getFontAscent(font), font, text, justify);

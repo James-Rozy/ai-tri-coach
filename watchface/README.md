@@ -39,7 +39,7 @@ Sideloaded faces can't be changed from Garmin Connect, so the settings only work
 
 ## Changing fonts
 
-Connect IQ can't load TTF files, so the fonts are generated as bitmaps: Archivo Condensed Black and JetBrains Mono (both SIL Open Font License, in `tools/fonts/`) for text and numbers, and seven-segment digits drawn from the same geometry as the mockup for the clock.
+Text and numbers use Garmin's built-in scalable Roboto Condensed (`Graphics.getVectorFont`), which the watch draws smoothly at any size. Bitmap fonts compiled from Archivo and JetBrains Mono (SIL Open Font License, in `tools/fonts/`) came out jagged on the watch, so they're only a fallback for watches without scalable fonts. The clock's seven-segment digits and the sport icons are generated as bitmaps from the same geometry as the mockup.
 
 ```sh
 python3 -m pip install pillow

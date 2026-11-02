@@ -167,7 +167,7 @@ def build_segment_font(name, w, h, t):
 # drawn in each sport's color at two sizes: the distance row and the week strip.
 SPORT_ICONS = Path(__file__).resolve().parent / "sport_icons.json"
 SPORT_COLORS = {"swim": (0x2E, 0xA4, 0xDC), "bike": (0xF2, 0x8E, 0x42), "run": (0x35, 0xC1, 0x77)}
-ICON_SIZES = {"Large": 15, "Small": 11}
+ICON_SIZES = {"Large": 18, "Small": 11}
 ICON_SS = 8
 
 
