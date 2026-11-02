@@ -40,13 +40,12 @@ TEXT_FONTS = [
 ]
 
 # id, glyph width, glyph height, segment thickness, characters (matches the mockup's segText calls).
-# Digits and "-" use seven segments, letters fourteen. A space is a blank digit-wide cell.
+# Digits and "-" use seven segments (letters can use fourteen; the face now sets them in plain type).
+# A space is a blank digit-wide cell.
 SEGMENT_FONTS = [
     ("seg_time", 42, 74, 10, "0123456789: "),
     ("seg_secs", 16, 32, 4, "0123456789"),
     ("seg_date", 18, 34, 5, "0123456789-"),
-    ("seg_day", 26, 36, 4.5, "ADEFHIMNORSTUW"),
-    ("seg_ampm", 13, 20, 3, "AMP"),
 ]
 
 SHEET_W = 512

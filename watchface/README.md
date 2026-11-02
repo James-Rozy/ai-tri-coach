@@ -2,7 +2,7 @@
 
 A Connect IQ watch face for the Garmin Fēnix 9 Pro 47mm (454×454 AMOLED), laid out like a digital sports watch from James's sketch, in the site's Race Timing colors. The design is the [mockup](https://claude.ai/artifact/HjvifodYnxCwp42sEF1FZk); the code follows its pixel positions.
 
-- **LCD panel (center):** a bordered panel with the day of the week and the date (month-day) on top, then the time, AM/PM and amber seconds. Unlit segments show faintly behind the digits.
+- **LCD panel (center):** a bordered panel with the day of the week (plain bold type) and the date (month-day, in a darker inset box) on top, then the time, AM/PM and amber seconds. Unlit segments show faintly behind the digits.
 - **Sport rings (top):** swim, bike and run. Each ring fills from 12 o'clock toward that sport's weekly time target. Inside are the icon, the week's distance and the week's time.
 - **Left:** phone connected, do not disturb, alarm set. Lit when on, faint when off.
 - **Right:** a wind dial (the arrow points where the wind is blowing) with its speed, then an icon for the current conditions over the temperature.
@@ -40,7 +40,7 @@ Sideloaded faces can't be changed from Garmin Connect, so the settings only work
 
 ## Changing fonts
 
-Text and numbers use Garmin's built-in scalable Roboto Condensed (`Graphics.getVectorFont`), which the watch draws smoothly at any size. Bitmap fonts compiled from Archivo and JetBrains Mono (SIL Open Font License, in `tools/fonts/`) came out jagged on the watch, so they're only a fallback for watches without scalable fonts. The LCD panel's seven- and fourteen-segment glyphs and the icons are generated as bitmaps from the same geometry as the mockup.
+Text and numbers use Garmin's built-in scalable Roboto Condensed (`Graphics.getVectorFont`), which the watch draws smoothly at any size. Bitmap fonts compiled from Archivo and JetBrains Mono (SIL Open Font License, in `tools/fonts/`) came out jagged on the watch, so they're only a fallback for watches without scalable fonts. The LCD panel's seven-segment digits and the icons are generated as bitmaps from the same geometry as the mockup.
 
 ```sh
 python3 -m pip install pillow

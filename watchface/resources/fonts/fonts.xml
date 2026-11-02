@@ -2,8 +2,6 @@
     <font id="SegTime" filename="seg_time.fnt" antialias="true"/>
     <font id="SegSecs" filename="seg_secs.fnt" antialias="true"/>
     <font id="SegDate" filename="seg_date.fnt" antialias="true"/>
-    <font id="SegDay" filename="seg_day.fnt" antialias="true"/>
-    <font id="SegAmPm" filename="seg_ampm.fnt" antialias="true"/>
     <font id="NumData" filename="num_data.fnt" antialias="true"/>
     <font id="NumDetail" filename="num_detail.fnt" antialias="true"/>
     <font id="MonoLabel" filename="mono_label.fnt" antialias="true"/>

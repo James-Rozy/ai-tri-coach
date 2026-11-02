@@ -19,10 +19,13 @@ const COLOR_FAINT = 0x7D8796;
 const COLOR_ACCENT = 0xFFB020;
 // Things that are off: status icons, the always-on panel outline.
 const COLOR_OFF = 0x2A313B;
-// The LCD panel: its fill, its border, and the unlit segments.
-const COLOR_PANEL = 0x0E141B;
+// The LCD panel: its fill, its border, and the unlit segments. The date's inset box is a shade
+// darker than the main panel, with its own unlit-segment color.
+const COLOR_PANEL = 0x18212B;
 const COLOR_PANEL_LINE = 0x2C3644;
-const COLOR_GHOST = 0x18202A;
+const COLOR_GHOST = 0x26303C;
+const COLOR_INSET = 0x0B1016;
+const COLOR_INSET_GHOST = 0x18202A;
 
 // Swim, bike, run. These colors only ever mean the sport.
 const SPORT_COLORS = [0x2EA4DC, 0xF28E42, 0x35C177];
@@ -50,11 +53,10 @@ class SplitDecisionsView extends WatchUi.WatchFace {
     private var _segTime as WatchUi.FontResource;
     private var _segSecs as WatchUi.FontResource;
     private var _segDate as WatchUi.FontResource;
-    private var _segDay as WatchUi.FontResource;
-    private var _segAmPm as WatchUi.FontResource;
     // Everything else uses Garmin's built-in scalable fonts, which the watch draws smoothly at any size.
     // The bundled bitmap fonts are only a fallback.
     private var _big as Graphics.FontType;    // 48 bold: days to race day
+    private var _day as Graphics.FontType;    // 34 bold: day of the week in the panel
     private var _temp as Graphics.FontType;   // 28 bold: temperature
     private var _row as Graphics.FontType;    // 26 bold: steps, battery, HR (as big as the quarter-width columns allow)
     private var _val as Graphics.FontType;    // 26 bold: distance in the sport rings
@@ -84,9 +86,8 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         _segTime = WatchUi.loadResource(Rez.Fonts.SegTime) as WatchUi.FontResource;
         _segSecs = WatchUi.loadResource(Rez.Fonts.SegSecs) as WatchUi.FontResource;
         _segDate = WatchUi.loadResource(Rez.Fonts.SegDate) as WatchUi.FontResource;
-        _segDay = WatchUi.loadResource(Rez.Fonts.SegDay) as WatchUi.FontResource;
-        _segAmPm = WatchUi.loadResource(Rez.Fonts.SegAmPm) as WatchUi.FontResource;
         _big = textFont(BOLD_FACES, 48, Rez.Fonts.NumData);
+        _day = textFont(BOLD_FACES, 34, Rez.Fonts.MonoBold);
         _temp = textFont(BOLD_FACES, 28, Rez.Fonts.NumData);
         _row = textFont(BOLD_FACES, 26, Rez.Fonts.NumDetail);
         _val = textFont(BOLD_FACES, 26, Rez.Fonts.NumDetail);
@@ -167,6 +168,8 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         if (!aod) {
             dc.setColor(COLOR_PANEL, COLOR_PANEL);
             dc.fillRoundedRectangle(x(74), y(162), sz(296), sz(150), sz(12));
+            dc.setColor(COLOR_INSET, COLOR_INSET);
+            dc.fillRoundedRectangle(x(230), y(167), sz(128), sz(46), sz(6));
         }
         dc.setColor(line, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(sz(2));
@@ -174,11 +177,11 @@ class SplitDecisionsView extends WatchUi.WatchFace {
         dc.setPenWidth(1);
         dc.drawRoundedRectangle(x(230), y(167), sz(128), sz(46), sz(6));
 
-        // Day of the week, then month-day in its inset box.
-        drawSeg(dc, 90, 172, _segDay, 4.5, DAY_NAMES[(today.day_of_week as Number) - 1], dim);
+        // Day of the week in plain bold type (easier to read than segment letters), then month-day in its inset box.
+        drawBaseline(dc, x(90), y(204), _day, DAY_NAMES[(today.day_of_week as Number) - 1], dim, Graphics.TEXT_JUSTIFY_LEFT);
         var dateStr = (today.month as Number).format("%02d") + "-" + (today.day as Number).format("%02d");
         if (!aod) {
-            drawSeg(dc, 240, 173, _segDate, 5, "88-88", COLOR_GHOST);
+            drawSeg(dc, 240, 173, _segDate, 5, "88-88", COLOR_INSET_GHOST);
         }
         drawSeg(dc, 240, 173, _segDate, 5, dateStr, dim);
 
@@ -199,7 +202,7 @@ class SplitDecisionsView extends WatchUi.WatchFace {
             return;
         }
         if (!is24Hour) {
-            drawSeg(dc, 316, 226, _segAmPm, 3, clock.hour < 12 ? "AM" : "PM", COLOR_MUTED);
+            drawBaseline(dc, x(316), y(244), _bold, clock.hour < 12 ? "AM" : "PM", COLOR_MUTED, Graphics.TEXT_JUSTIFY_LEFT);
         }
         drawSeg(dc, 316, 266, _segSecs, 4, "88", COLOR_GHOST);
         drawSeg(dc, 316, 266, _segSecs, 4, clock.sec.format("%02d"), COLOR_ACCENT);
