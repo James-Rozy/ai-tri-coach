@@ -1,0 +1,199 @@
+---
+import { getCollection, render } from 'astro:content';
+import { Image } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import SeasonLine from '../../components/SeasonLine.astro';
+import Signup from '../../components/Signup.astro';
+import swimExit from '../../assets/photos/swim-exit.jpg';
+import bike from '../../assets/photos/bike.jpg';
+import run from '../../assets/photos/run.jpg';
+
+const updates = (await getCollection('updates')).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const posts = await Promise.all(updates.map(async (u) => ({ entry: u, ...(await render(u)) })));
+const longDate = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+
+const legColor: Record<string, string> = { Swim: 'var(--swim)', Bike: 'var(--bike)', Run: 'var(--run)', T1: 'var(--trans)', T2: 'var(--trans)' };
+
+// Race photos (FinisherPix), shown under the race result.
+const legPhotos = [
+  { src: swimExit, leg: 'Swim', alt: 'James running out of the lake after the swim in a wetsuit and green cap', color: 'var(--swim)' },
+  { src: bike, leg: 'Bike', alt: 'James riding his road bike toward the camera on the bike course', color: 'var(--bike)' },
+  { src: run, leg: 'Run', alt: 'James running on the run course', color: 'var(--run)' },
+];
+---
+<Base title="My progress" description="My build from a missed sub-5 at 70.3 Michigan to a rematch and a first Ironman, coached by AI. Every plan, number and bad week.">
+  <header class="wrap section intro stack">
+    <p class="label">My progress</p>
+    <h1>The build, in public</h1>
+    <p class="lede muted">
+      I’m using the same setup as the guide to coach myself from a missed goal to a 70.3 rematch and then my first
+      Ironman. Here’s every plan, what I actually did, and what my coach changed. The misses stay in.
+    </p>
+  </header>
+
+  <section class="wrap season-wrap" aria-labelledby="season-heading">
+    <h2 id="season-heading" class="visually-hidden">The season</h2>
+    <SeasonLine />
+  </section>
+
+  <section class="wrap section" aria-labelledby="log-heading">
+    <h2 id="log-heading" class="log-title">Updates</h2>
+    <ol class="log">
+      {posts.map(({ entry, Content }) => (
+        <li id={entry.id}>
+          <article class="post">
+            <header class="post-head">
+              <p class="mono post-meta">
+                <time datetime={entry.data.date.toISOString().slice(0, 10)}>{longDate(entry.data.date)}</time>
+                <span class="phase">{entry.data.phase}</span>
+              </p>
+              <h3><a href={`#${entry.id}`}>{entry.data.title}</a></h3>
+              <p class="muted">{entry.data.summary}</p>
+            </header>
+
+            {entry.data.splits && (
+              <dl class="splits mono" aria-label="Splits">
+                {entry.data.splits.map((s) => (
+                  <div class="split" style={`--leg: ${legColor[s.leg]}`}>
+                    <dt>{s.leg}</dt>
+                    <dd class="time">{s.time}</dd>
+                    <dd class="note">{s.note}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+
+            {entry.data.stats.length > 0 && (
+              <dl class="stats">
+                {entry.data.stats.map((s) => (
+                  <div>
+                    <dt class="mono">{s.label}</dt>
+                    <dd>{s.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+
+            <div class="body"><Content /></div>
+
+            {entry.data.phase === 'Race' && (
+              <ul class="legs">
+                {legPhotos.map((p) => (
+                  <li style={`--leg: ${p.color}`}>
+                    <Image src={p.src} alt={p.alt} widths={[360, 600]} sizes="(width < 40rem) 72vw, 16rem" />
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {entry.data.video && <p><a href={entry.data.video}>Watch the episode <span class="arrow" aria-hidden="true">→</span></a></p>}
+          </article>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <div class="wrap section">
+    <Signup />
+  </div>
+</Base>
+
+<style>
+  @layer components {
+    .intro { --stack-gap: var(--space-s); padding-block-end: var(--space-l); }
+    .lede { font-size: var(--step-1); line-height: 1.5; }
+    .season-wrap { padding-block-start: var(--space-m); }
+    .log-title { margin-block-end: var(--space-m); }
+
+    /* A vertical course line runs down the left, with a timing mat at each update. */
+    .log { list-style: none; padding: 0; display: grid; gap: var(--space-l); position: relative; }
+    .log::before {
+      content: "";
+      position: absolute;
+      inset-block: 0.5rem 0;
+      inset-inline-start: 0.4rem;
+      inline-size: 2px;
+      background: repeating-linear-gradient(var(--line) 0 8px, transparent 8px 14px);
+    }
+    .log > li { position: relative; padding-inline-start: var(--space-l); scroll-margin-block-start: 6rem; }
+    .log > li::before {
+      content: "";
+      position: absolute;
+      inset-inline-start: 0;
+      inset-block-start: 0.35rem;
+      inline-size: 0.9rem;
+      block-size: 0.9rem;
+      border-radius: 3px;
+      background: var(--bg);
+      border: 2px solid var(--accent);
+    }
+    .log > li:target::before { background: var(--accent); }
+
+    .post { display: grid; gap: var(--space-m); max-inline-size: 48rem; }
+    .post-head { display: grid; gap: 0.5rem; }
+    .post-head h3 { font-size: var(--step-2); font-weight: 900; font-stretch: 80%; line-height: 1.05; }
+    .post-head h3 a { text-decoration: none; }
+    .post-head h3 a:hover { color: var(--accent); }
+    .post-meta { display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.8rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; }
+    .phase { color: var(--accent); }
+
+    .splits {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      font-size: var(--step--1);
+    }
+    .split { background: var(--surface); padding: 0.8rem; display: grid; gap: 0.2rem; border-block-start: 3px solid var(--leg); }
+    .split dt { text-transform: uppercase; color: var(--leg); font-weight: 600; }
+    .split .time { font-size: var(--step-1); font-weight: 600; }
+    .split .note { color: var(--ink-faint); font-size: 0.75rem; }
+
+    .stats { display: flex; flex-wrap: wrap; gap: var(--space-s) var(--space-l); }
+    .stats dt { font-size: 0.75rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; }
+    .stats dd {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      font-size: var(--step-2);
+      font-weight: 600;
+      line-height: 1.1;
+    }
+
+    .body { display: grid; gap: 0.9em; }
+    .body :global(ul) { padding-inline-start: 1.25em; display: grid; gap: 0.5em; }
+    .body :global(strong) { color: var(--ink); }
+
+    .legs {
+      list-style: none;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-s);
+    }
+    .legs img {
+      inline-size: 100%;
+      block-size: auto;
+      aspect-ratio: 4 / 5;
+      object-fit: cover;
+      border-radius: var(--radius);
+      border-block-end: 3px solid var(--leg);
+      filter: saturate(0.85);
+      transition: filter 0.3s;
+    }
+    .legs li:hover img { filter: none; }
+    @media (width < 40rem) {
+      .legs {
+        grid-template-columns: none;
+        grid-auto-flow: column;
+        grid-auto-columns: 72%;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        overscroll-behavior-x: contain;
+      }
+      .legs li { scroll-snap-align: start; }
+    }
+  }
+</style>

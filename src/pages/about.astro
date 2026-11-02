@@ -1,0 +1,143 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Signup from '../components/Signup.astro';
+import finishChute from '../assets/photos/finish-chute.jpg';
+import swimExit from '../assets/photos/swim-exit.jpg';
+
+// The road here, as splits.
+const timeline = [
+  { when: 'College', what: 'D1 water polo. Years of cold pools and late-game calf cramps.', color: 'var(--swim)' },
+  { when: '2025', what: 'Raced the Chicago Triathlon.', color: 'var(--bike)' },
+  { when: 'Sept 2026', what: '70.3 Michigan. Goal: under 5 hours. Result: 5:22:56.', color: 'var(--run)' },
+  { when: 'Nov 2026', what: 'Base training starts, with an AI as my coach.', color: 'var(--trans)' },
+  { when: '2027', what: 'A couple of 70.3s, including a Michigan rematch. Then my first full Ironman.', color: 'var(--accent)' },
+];
+---
+<Base title="About" description="I'm James, a Chicago frontend developer and former D1 water polo player. I missed my 70.3 goal, so I'm letting AI coach me to a rematch and a first Ironman.">
+  <section class="wrap section hero">
+    <div class="stack copy">
+      <p class="label">About</p>
+      <h1>I missed my goal by 23 minutes.</h1>
+      <p class="lede">
+        I’m James. I’m a frontend developer in Chicago, a former D1 water polo player, and an age-group triathlete.
+        Split Decisions is how I’m getting those minutes back, in public.
+      </p>
+    </div>
+    <figure class="photo">
+      <Image
+        src={finishChute}
+        alt="James smiling as he runs down the finish chute at Ironman 70.3 Michigan"
+        widths={[480, 800, 1200]}
+        sizes="(width < 40rem) 100vw, 45vw"
+        loading="eager"
+      />
+      <figcaption class="mono">70.3 Michigan · 5:22:56</figcaption>
+    </figure>
+  </section>
+
+  <article class="wrap story stack">
+    <h2>The race</h2>
+    <p>
+      At Ironman 70.3 Michigan in September 2026 I was aiming to go under five hours. The swim went the way I hoped:
+      I came out of the water 7th in my age group. Then my calves cramped while I was pulling off my wetsuit, and the
+      rest of the day was a slow leak. A dropped chain on the bike, a fade over the last miles, two stops on the run. I
+      finished in 5:22:56, 46th in my division.
+    </p>
+    <p>
+      Afterward I gave an AI everything I had from the race: my splits, my watch files and my notes from each leg. I
+      asked it where the time went. It came back with a breakdown I couldn’t argue with: about 10 minutes on the bike,
+      7 on the run and 6 in transitions, nearly all of it tied to cramps I’d been ignoring since my water polo days.
+    </p>
+
+    <h2>Why Split Decisions</h2>
+    <p>
+      A race is a pile of small decisions. How hard to push on the bike, when to eat, whether to stop. Training is the
+      same thing stretched over months, and most of us make those calls on feel. A split is the time you get at each
+      timing mat. A decision is what you do about it.
+    </p>
+    <p>
+      So I’m letting an AI coach me. Not a canned plan: a coach that works from my real data, explains every change in
+      plain language, and tells me straight when I’m skipping sessions or riding my easy days too hard. I’m sharing the
+      whole setup in <a href="/guide/">the guide</a>, written so it works for any sport, and I’m posting how it goes
+      on <a href="/progress/">my progress page</a> and on YouTube, including the weeks that go badly.
+    </p>
+
+    <h2>Where this is going</h2>
+    <ol class="timeline">
+      {timeline.map((t) => (
+        <li style={`--leg: ${t.color}`}>
+          <span class="mono when">{t.when}</span>
+          <span>{t.what}</span>
+        </li>
+      ))}
+    </ol>
+
+    <figure class="inline-photo">
+      <Image src={swimExit} alt="James running out of the lake after the swim in a wetsuit and green cap" widths={[600, 900]} sizes="(width < 48rem) 100vw, 48rem" />
+      <figcaption class="muted">The part that went to plan.</figcaption>
+    </figure>
+
+    <h2>What I’m not</h2>
+    <p>
+      I’m not a certified coach, and AI isn’t one either. It’s a tool that’s good at reading data and explaining
+      tradeoffs. If something hurts, see a doctor before you ask a chatbot. What I can promise is that I’ll show you
+      what actually happens, with real numbers.
+    </p>
+  </article>
+
+  <div class="wrap section">
+    <Signup />
+  </div>
+</Base>
+
+<style>
+  @layer components {
+    .hero {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+      gap: var(--space-l);
+      align-items: center;
+    }
+    .copy { --stack-gap: var(--space-m); }
+    .lede { font-size: var(--step-1); line-height: 1.5; color: var(--ink-muted); }
+    .photo { margin: 0; position: relative; aspect-ratio: 4 / 5; overflow: hidden; border-radius: var(--radius); border: 1px solid var(--line); }
+    .photo img { inline-size: 100%; block-size: 100%; object-fit: cover; object-position: 72% 30%; }
+    .photo figcaption {
+      position: absolute;
+      inset: auto auto var(--space-s) var(--space-s);
+      background: rgb(14 17 22 / 0.85);
+      backdrop-filter: blur(6px);
+      padding: 0.35em 0.7em;
+      border-radius: 6px;
+      border-inline-start: 3px solid var(--accent);
+      font-size: var(--step--1);
+    }
+
+    .story { --stack-gap: var(--space-s); max-inline-size: 44rem; padding-block-end: var(--space-xl); }
+    .story h2 { margin-block-start: var(--space-l); }
+    .story p { color: var(--ink-muted); }
+    .story a { color: var(--ink); }
+
+    .timeline { list-style: none; padding: 0; display: grid; gap: 0; }
+    .timeline li {
+      display: grid;
+      grid-template-columns: 6.5rem 1fr;
+      gap: var(--space-s);
+      padding: 0.8rem 0 0.8rem 0.9rem;
+      border-inline-start: 3px solid var(--leg);
+    }
+    .timeline li + li { border-block-start: 1px dashed var(--line); }
+    .when { color: var(--leg); text-transform: uppercase; font-size: var(--step--1); padding-block-start: 0.15em; }
+    @media (prefers-reduced-motion: no-preference) {
+      @supports (animation-timeline: view()) {
+        .timeline li { animation: slide linear both; animation-timeline: view(); animation-range: entry 0% entry 80%; }
+      }
+    }
+    @keyframes slide { from { opacity: 0; translate: -1rem 0; } }
+
+    .inline-photo { margin: var(--space-m) 0 0; display: grid; gap: 0.5rem; }
+    .inline-photo img { inline-size: 100%; block-size: auto; aspect-ratio: 16 / 10; object-fit: cover; border-radius: var(--radius); }
+    .inline-photo figcaption { font-size: var(--step--1); }
+  }
+</style>

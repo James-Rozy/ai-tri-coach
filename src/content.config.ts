@@ -16,4 +16,22 @@ const prompts = defineCollection({
   }),
 });
 
-export const collections = { prompts };
+// "My Progress" posts: one markdown file per update, newest first on /progress/.
+const updates = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/updates' }),
+  schema: z.object({
+    title: z.string(),
+    date: z.coerce.date(),
+    phase: z.enum(['Race', 'Off-season', 'Base', 'Build', 'Taper']),
+    summary: z.string(),
+    // Optional numbers shown as a timing board above the post.
+    stats: z.array(z.object({ label: z.string(), value: z.string() })).default([]),
+    // A race result: one row per leg, rendered as splits.
+    splits: z
+      .array(z.object({ leg: z.enum(['Swim', 'T1', 'Bike', 'T2', 'Run']), time: z.string(), note: z.string().default('') }))
+      .optional(),
+    video: z.string().url().optional(),
+  }),
+});
+
+export const collections = { prompts, updates };
