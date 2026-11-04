@@ -1,0 +1,295 @@
+---
+import Base from '../layouts/Base.astro';
+
+// How the data moves, drawn as a course: each stop is a timing mat.
+const flow = [
+  { mat: '01', name: 'Your watch', note: 'Records every session. Mine is a Garmin Fenix 9 Pro.', color: 'var(--swim)' },
+  { mat: '02', name: 'Strava + Intervals.icu', note: 'The watch app syncs each activity to both, automatically.', color: 'var(--bike)' },
+  { mat: '03', name: 'Claude', note: 'Reads your training from Strava and your recovery from Intervals.icu.', color: 'var(--run)' },
+  { mat: '04', name: 'Intervals.icu calendar', note: 'Claude writes the week’s workouts onto it.', color: 'var(--trans)' },
+  { mat: 'Fin', name: 'Back on your watch', note: 'Intervals.icu sends each planned workout to the watch.', color: 'var(--accent)' },
+];
+
+const levels = [
+  { tag: 'Level 1', time: '10 min', what: 'Strava connected to Claude. Enough to start.' },
+  { tag: 'Level 2', time: '+20 min', what: 'Recovery data (sleep, HRV, resting heart rate) from Intervals.icu.' },
+  { tag: 'Level 3', time: '+10 min', what: 'Workouts land on your watch without retyping them.' },
+];
+---
+<Base title="Setup: connect your data to Claude" description="Step-by-step instructions for the setup from my videos: connect Strava to Claude, add recovery data from Intervals.icu, and get the plan onto your watch. Works with any watch and any sport.">
+  <article class="wrap section setup stack">
+    <p class="label">Setup · the instructions from my videos</p>
+    <h1>Connect your data to Claude</h1>
+    <p class="lede muted">
+      If you came here from a video, this is the setup I use to have Claude coach my training. It reads what I actually
+      did, plans the next week from it, and puts the workouts on my watch. I use a Garmin and do triathlon, but every
+      step has a version for other watches and other sports.
+    </p>
+
+    <section class="stack" aria-labelledby="flow-heading">
+      <h2 id="flow-heading">How it fits together</h2>
+      <ol class="flow" role="list">
+        {flow.map((stop) => (
+          <li style={`--leg: ${stop.color}`}>
+            <span class="mat mono">{stop.mat}</span>
+            <strong>{stop.name}</strong>
+            <span class="muted">{stop.note}</span>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <section class="stack" aria-labelledby="levels-heading">
+      <h2 id="levels-heading">Pick how far to go</h2>
+      <p>
+        You don’t need all of it. Level 1 is the whole idea: a coach that sees your real training. Add the other two when
+        you want them.
+      </p>
+      <ul class="levels" role="list">
+        {levels.map((l) => (
+          <li>
+            <span class="mono tag">{l.tag}</span>
+            <span class="mono time">{l.time}</span>
+            <span>{l.what}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="leg stack" id="level-1" style="--leg: var(--swim)" aria-labelledby="l1">
+      <p class="label">Level 1</p>
+      <h2 id="l1">Strava, connected to Claude</h2>
+      <p class="muted">You need: a Claude account, a Strava account with a subscription (the Claude connector requires one), and a watch or phone that uploads to Strava.</p>
+      <ol class="steps">
+        <li>
+          <strong>Get your sessions into Strava.</strong> In your watch’s app (Garmin Connect, COROS, Apple Health, Wahoo
+          and most others), turn on the Strava connection so every activity uploads on its own. Check that last week’s
+          sessions are there.
+        </li>
+        <li>
+          <strong>Write notes on your activities.</strong> Claude reads the title and description too. One line like
+          “calves tight from mile 3” or “skipped the last interval, work stress” tells it more than the numbers do.
+        </li>
+        <li>
+          <strong>Connect Strava to Claude.</strong> In Claude, open Settings, then Connectors, find Strava and connect
+          it. Strava asks you to approve access. Claude can read your data but can’t edit or post anything.
+        </li>
+        <li>
+          <strong>Set up the coach.</strong> Make a Claude Project for your training and run the prompts from <a href="/guide/">the
+          guide</a>, starting with the athlete profile. That’s where you give it your goal, your
+          history and your limits.
+        </li>
+        <li>
+          <strong>Test it.</strong> Ask: “Look at my last four weeks on Strava. What did I actually do, and what stands
+          out?” If it lists real sessions with real dates, you’re connected.
+        </li>
+      </ol>
+    </section>
+
+    <section class="leg stack" id="level-2" style="--leg: var(--bike)" aria-labelledby="l2">
+      <p class="label">Level 2 · optional</p>
+      <h2 id="l2">Recovery data from Intervals.icu</h2>
+      <p>
+        Strava knows what you did. It doesn’t know how you slept. <a href="https://intervals.icu">Intervals.icu</a> (free)
+        pulls sleep, HRV and resting heart rate from your watch, and that’s what lets Claude say “you’re run down, swap
+        tomorrow for something easy” before you feel it.
+      </p>
+      <p class="muted">
+        There’s no Claude connector for Intervals.icu, so Claude reads it through its API with a key. This part is more
+        technical. I do it in Claude Code, where the key lives in the environment settings instead of the chat.
+      </p>
+      <ol class="steps">
+        <li>
+          <strong>Make an Intervals.icu account</strong> and connect your watch under Settings. Give it a few days to fill
+          in history. Wellness numbers only show up if your watch tracks sleep.
+        </li>
+        <li>
+          <strong>Get your API key.</strong> In Intervals.icu Settings, under Developer Settings, generate an API key and
+          note your athlete ID (it starts with “i”).
+        </li>
+        <li>
+          <strong>Store the key where Claude can use it without seeing it in a message.</strong> In Claude Code on the
+          web, add it to your cloud environment’s settings as an environment variable. I use <code>INTERVALS_API_KEY</code> and <code>INTERVALS_ATHLETE_ID</code>. Then tell Claude the variable names, not
+          the values.
+        </li>
+        <li>
+          <strong>Set the rules.</strong> Tell Claude to only read from the API, except for adding planned workouts in
+          Level 3, and never to change or delete your activities.
+        </li>
+      </ol>
+      <aside class="rule">
+        <p class="mono label">Rule</p>
+        <p>
+          Never paste an API key into a chat, a video description or a screenshot. Anyone with the key can read your
+          account. If one leaks, delete it in Intervals.icu and make a new one.
+        </p>
+      </aside>
+    </section>
+
+    <section class="leg stack" id="level-3" style="--leg: var(--run)" aria-labelledby="l3">
+      <p class="label">Level 3 · optional</p>
+      <h2 id="l3">The plan, on your watch</h2>
+      <p>
+        Claude doesn’t talk to your watch. It puts the workouts on your Intervals.icu calendar, and Intervals.icu sends
+        them to the watch. That’s why the day’s session is just there when I press start.
+      </p>
+      <ol class="steps">
+        <li>
+          <strong>Turn on workout upload.</strong> In Intervals.icu, open your watch connection in Settings and turn on
+          uploading planned workouts. I use Garmin. Check the Intervals.icu <a href="https://intervals.icu/integrations/">integrations
+          page</a> for whether yours supports it.
+        </li>
+        <li>
+          <strong>Ask for the week.</strong> Once you’ve agreed on the plan, ask Claude to add it to your Intervals.icu
+          calendar. Have it write each workout as steps on their own lines (like <code>- Easy 35m</code>) so Intervals.icu
+          turns them into a structured workout.
+        </li>
+        <li>
+          <strong>Check one before you rely on it.</strong> Open tomorrow’s workout in Intervals.icu, then sync your watch
+          and find it there. If it shows up, the rest will too.
+        </li>
+      </ol>
+      <p class="muted">
+        Skipping Levels 2 and 3? Ask Claude to write the workout out, then build it in your watch app’s workout builder.
+        It takes two minutes a session.
+      </p>
+    </section>
+
+    <section class="leg stack" id="manual" style="--leg: var(--trans)" aria-labelledby="manual-heading">
+      <p class="label">Every level</p>
+      <h2 id="manual-heading">Log what your watch can’t</h2>
+      <p>
+        I play water polo once or twice a week, and I don’t wear a watch for it. If it isn’t logged, my coach thinks I
+        took a rest day. So after each practice I add a manual activity on Strava:
+      </p>
+      <ul class="steps">
+        <li>Type “Workout”, titled with the sport (mine is “Polo”).</li>
+        <li>How long you went, and Strava’s perceived exertion slider.</li>
+        <li>One line in the description: anything that hurt, and whether it was drills or a game.</li>
+      </ul>
+      <p class="muted">
+        Log it on Strava directly. In my experience, manual activities added in Garmin Connect don’t sync over. The same
+        trick covers a gym class, a pickup game, a hike, or a round of golf.
+      </p>
+    </section>
+
+    <section class="stack" aria-labelledby="other-heading">
+      <h2 id="other-heading">Different watch or sport?</h2>
+      <dl class="other">
+        <div>
+          <dt>Apple Watch, COROS, Suunto, Wahoo, Polar</dt>
+          <dd>Level 1 works the same as long as the watch app uploads to Strava. For Levels 2 and 3, check what your watch supports on the Intervals.icu integrations page.</dd>
+        </div>
+        <div>
+          <dt>No watch</dt>
+          <dd>Record on your phone with the Strava app, or log sessions by hand. Claude coaches from whatever you give it.</dd>
+        </div>
+        <div>
+          <dt>A sport Strava doesn’t track well</dt>
+          <dd>Skip the connector. Keep a simple spreadsheet or upload exports and scorecards to your Claude Project. <a href="/guide/">The guide</a> has examples for other sports, including golf.</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="next stack" aria-labelledby="next-heading">
+      <h2 id="next-heading">Next: give it a brief</h2>
+      <p>
+        A connection is just a pipe. The coaching comes from what you tell it: your goal, your history, your limits, and
+        a weekly check-in. That’s the four prompts in the guide.
+      </p>
+      <p class="actions">
+        <a class="button" href="/guide/">Get the prompts <span class="arrow" aria-hidden="true">→</span></a>
+        <a class="button ghost" href="/progress/">See how it’s going for me</a>
+      </p>
+    </section>
+  </article>
+</Base>
+
+<style>
+  @layer components {
+    .setup { --stack-gap: var(--space-m); max-inline-size: 48rem; }
+    .setup section { --stack-gap: var(--space-s); padding-block-start: var(--space-m); }
+    .lede { font-size: var(--step-1); line-height: 1.45; }
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      padding: 0.1em 0.35em;
+      border-radius: 4px;
+      background: var(--surface-2);
+      overflow-wrap: anywhere;
+    }
+
+    /* The data path as a course: a line with a timing mat at each stop. */
+    .flow { list-style: none; padding: 0; margin-block-start: var(--space-s); display: grid; }
+    .flow li {
+      position: relative;
+      display: grid;
+      grid-template-columns: 3.25rem 1fr;
+      column-gap: var(--space-s);
+      padding-block: 0.6rem;
+    }
+    .flow li > :not(.mat) { grid-column: 2; }
+    .flow li::before {
+      content: "";
+      position: absolute;
+      inset-block: 0;
+      inset-inline-start: calc(1.625rem - 1px);
+      inline-size: 2px;
+      background: repeating-linear-gradient(var(--leg) 0 6px, transparent 6px 10px);
+    }
+    .flow li:first-child::before { inset-block-start: 50%; }
+    .flow li:last-child::before { inset-block-end: 50%; }
+    .mat {
+      position: relative;
+      grid-row: span 2;
+      align-self: center;
+      display: grid;
+      place-items: center;
+      block-size: 2rem;
+      border-radius: 4px;
+      background: var(--surface-2);
+      box-shadow: inset 0 0 0 1px var(--leg);
+      color: var(--leg);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+    }
+
+    .levels { list-style: none; padding: 0; display: grid; gap: 0.4rem; }
+    .levels li {
+      display: grid;
+      grid-template-columns: auto auto 1fr;
+      align-items: baseline;
+      gap: var(--space-s);
+      padding: 0.7rem var(--space-s);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    .levels .tag { color: var(--accent); text-transform: uppercase; font-size: var(--step--1); }
+    .levels .time { color: var(--ink-faint); font-size: var(--step--1); }
+    @media (width < 32rem) {
+      .levels li { grid-template-columns: auto 1fr; row-gap: 0.2rem; }
+      .levels li > :last-child { grid-column: 1 / -1; }
+    }
+
+    .leg { border-inline-start: 3px solid var(--leg); padding-inline-start: var(--space-m); }
+    .leg .label { color: var(--leg); }
+    .steps { display: grid; gap: var(--space-s); padding-inline-start: 1.25em; }
+    .steps li::marker { color: var(--ink-faint); font-family: var(--font-mono); }
+
+    .rule {
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: var(--space-s) var(--space-m);
+    }
+    .rule .label { color: var(--accent); margin-block-end: 0.25em; }
+
+    .other { display: grid; gap: var(--space-s); }
+    .other div { padding: var(--space-s) var(--space-m); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+    .other dt { font-weight: 700; }
+    .other dd { margin: 0.25em 0 0; color: var(--ink-muted); }
+
+    .actions { display: flex; flex-wrap: wrap; gap: var(--space-s); }
+  }
+</style>
