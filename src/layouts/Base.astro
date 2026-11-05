@@ -27,6 +27,10 @@ const socials = [
 ];
 const path = Astro.url.pathname;
 const isCurrent = (href: string) => path === href || path.startsWith(href);
+// Absolute URLs for link previews (YouTube, Instagram, TikTok, texts). Always the .com, never www or .net.
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const isNotFound = Astro.url.pathname.startsWith('/404');
+const ogImage = new URL('/og-image.png', Astro.site).href;
 const fullTitle = title === 'Home' ? 'Split Decisions · Build your own AI coach' : `${title} · Split Decisions`;
 ---
 <!doctype html>
@@ -37,7 +41,19 @@ const fullTitle = title === 'Home' ? 'Split Decisions · Build your own AI coach
     <meta name="description" content={description} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Split Decisions" />
+    {!isNotFound && <meta property="og:url" content={canonical} />}
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Split Decisions: build your own AI coach. Goal 4:59:59, result 5:22:56, next Ironman." />
+    <meta name="twitter:card" content="summary_large_image" />
+    {isNotFound ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
+    <meta name="theme-color" content="#0E1116" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
