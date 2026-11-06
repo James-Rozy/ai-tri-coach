@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://splitdecisionscoach.com/sitemap-index.xml
