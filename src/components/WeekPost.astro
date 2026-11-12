@@ -1,0 +1,163 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { render } from 'astro:content';
+
+interface Props {
+  entry: CollectionEntry<'weeks'>;
+  /** Heading level for the title: h1 on the week's own page, h2 on /training/. */
+  level?: 'h1' | 'h2';
+}
+const { entry, level = 'h2' } = Astro.props;
+const { Content } = await render(entry);
+const d = entry.data;
+const Heading = level;
+
+const sportColor: Record<string, string> = {
+  Swim: 'var(--swim)', Polo: 'var(--swim)', Bike: 'var(--bike)', Run: 'var(--run)',
+  Strength: 'var(--accent)', Rest: 'var(--trans)', Travel: 'var(--trans)', Other: 'var(--trans)',
+};
+const hm = (m: number) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
+const range = (start: Date) => {
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 6);
+  const f = (x: Date) => x.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  return `${f(start)} – ${f(end)}`;
+};
+const plannedMin = d.plan.reduce((s, p) => s + (p.minutes ?? 0), 0);
+const sessions = d.plan.filter((p) => !['Rest', 'Travel'].includes(p.sport)).length;
+const statusLabel = { done: 'Done', missed: 'Missed', swapped: 'Swapped', extra: 'Extra', rest: 'Rest' } as const;
+const r = d.review;
+// "70′/70′" when a planned session happened, otherwise whichever number exists.
+const reviewMins = (i: { minutes?: number; actualMinutes?: number; status: string }) => {
+  if (i.status !== 'extra' && i.minutes != null && i.actualMinutes != null) return `${i.actualMinutes}′/${i.minutes}′`;
+  const m = i.actualMinutes ?? i.minutes;
+  return m != null ? `${m}′` : '';
+};
+const missed = r?.items.filter((i) => i.status === 'missed').length ?? 0;
+---
+<article class="week">
+  <header class="head">
+    <p class="mono meta">
+      <time datetime={d.week.toISOString().slice(0, 10)}>Week of {range(d.week)}</time>
+      <span class="phase">{d.phase}</span>
+    </p>
+    <Heading class="title"><a href={`/training/${entry.id}/`}>{d.title}</a></Heading>
+    <p class="muted summary">{d.summary}</p>
+  </header>
+
+  <dl class="board mono" aria-label="This week at a glance">
+    <div><dt>Planned</dt><dd>{plannedMin ? hm(plannedMin) : '—'}</dd></div>
+    <div><dt>Sessions</dt><dd>{sessions}</dd></div>
+    {r && <div><dt>Last week</dt><dd>{hm(r.doneMinutes)}<small> / {hm(r.plannedMinutes)}</small></dd></div>}
+    {r && <div class:list={{ flag: missed > 0 }}><dt>Missed</dt><dd>{missed}</dd></div>}
+  </dl>
+
+  <section aria-label="The plan">
+    <h3 class="label">The plan</h3>
+    <ol class="plan">
+      {d.plan.map((p) => (
+        <li style={`--sport: ${sportColor[p.sport]}`}>
+          <span class="day mono">{p.day}</span>
+          <span class="sport mono">{p.sport}</span>
+          <span class="session">{p.session}{p.note && <span class="note"> · {p.note}</span>}</span>
+          <span class="mins mono">{p.minutes ? `${p.minutes}′` : ''}</span>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <div class="body"><Content /></div>
+
+  {r && (
+    <section aria-label="Last week, planned vs done">
+      <h3 class="label">Last week, planned vs done</h3>
+      <ol class="plan review">
+        {r.items.map((i) => (
+          <li style={`--sport: ${sportColor[i.sport]}`} data-status={i.status}>
+            <span class="day mono">{i.day}</span>
+            <span class="status mono">{statusLabel[i.status]}</span>
+            <span class="session">{i.session}{i.note && <span class="note"> · {i.note}</span>}</span>
+            <span class="mins mono">{reviewMins(i)}</span>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )}
+
+  {d.video && <p><a href={d.video}>Watch the episode <span class="arrow" aria-hidden="true">→</span></a></p>}
+</article>
+
+<style>
+  @layer components {
+    .week { display: grid; gap: var(--space-m); max-inline-size: 48rem; }
+    .head { display: grid; gap: 0.5rem; }
+    .title { font-size: var(--step-3); font-weight: 900; font-stretch: 80%; line-height: 1.02; }
+    .title a { text-decoration: none; }
+    .title a:hover { color: var(--accent); }
+    .meta { display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.8rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; }
+    .phase { color: var(--accent); }
+    .summary { font-size: var(--step-1); line-height: 1.45; }
+
+    /* Timing board: four tabular readouts. */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+      gap: 1px;
+      background: var(--lcd-line);
+      border: 1px solid var(--lcd-line);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .board > div { background: var(--lcd); padding: 0.8rem 1rem; display: grid; gap: 0.25rem; }
+    .board dt { font-size: 0.7rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.1em; }
+    .board dd { font-size: var(--step-2); font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; white-space: nowrap; }
+    .board small { font-size: 0.55em; color: var(--ink-faint); font-weight: 400; }
+    .board .flag dd { color: var(--accent); }
+
+    .label { margin-block-end: var(--space-s); }
+    .plan { list-style: none; padding: 0; margin: 0; border-block-start: 1px solid var(--line); }
+    .plan li {
+      display: grid;
+      grid-template-columns: 3rem 5.5rem 1fr auto;
+      gap: var(--space-s);
+      align-items: baseline;
+      padding-block: 0.65rem;
+      border-block-end: 1px solid var(--line);
+      font-size: var(--step--1);
+    }
+    .day { color: var(--ink-faint); text-transform: uppercase; }
+    .sport, .status { color: var(--sport); text-transform: uppercase; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; }
+    .sport::before, .status::before {
+      content: "";
+      display: inline-block;
+      inline-size: 0.5rem;
+      block-size: 0.5rem;
+      border-radius: 2px;
+      margin-inline-end: 0.4rem;
+      background: var(--sport);
+    }
+    .session { color: var(--ink); }
+    .note { color: var(--ink-faint); }
+    .mins { color: var(--ink-muted); font-variant-numeric: tabular-nums; text-align: end; white-space: nowrap; }
+
+    /* Misses stay in: struck through and flagged in the accent, never hidden. */
+    .review [data-status='missed'] .status { color: var(--accent); }
+    .review [data-status='missed'] .status::before { background: var(--accent); }
+    .review [data-status='missed'] .session { text-decoration: line-through; text-decoration-color: var(--accent); color: var(--ink-muted); }
+    .review [data-status='extra'] .status { color: var(--ink-muted); }
+    .review [data-status='extra'] .status::before { background: transparent; outline: 1px solid var(--ink-muted); outline-offset: -1px; }
+
+    @media (width < 32rem) {
+      .plan li { grid-template-columns: 2.6rem 1fr auto; grid-template-areas: "day kind mins" "day text text"; row-gap: 0.15rem; }
+      .day { grid-area: day; }
+      .sport, .status { grid-area: kind; }
+      .session { grid-area: text; }
+      .mins { grid-area: mins; }
+    }
+
+    .body { display: grid; gap: 0.9em; }
+    .body :global(h2) { font-size: var(--step-1); font-weight: 900; font-stretch: 80%; text-transform: uppercase; margin-block-start: 0.5em; }
+    .body :global(ul) { padding-inline-start: 1.25em; display: grid; gap: 0.5em; }
+    .body :global(strong) { color: var(--ink); }
+  }
+</style>

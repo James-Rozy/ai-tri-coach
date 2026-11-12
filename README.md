@@ -18,6 +18,8 @@ npm run build    # static output in dist/
 | `src/pages/guide/index.astro` | The free guide (four prompts + setup). `/kit/` redirects here. |
 | `src/pages/progress/index.astro` | My Progress: season line plus every update, newest first. |
 | `src/content/updates/*.md` | One file per progress update. Frontmatter: `title`, `date`, `phase`, `summary`, optional `stats`, `splits`, `video`. |
+| `src/pages/training/` | This week's training: the latest week in full, past weeks listed, one page per week. |
+| `src/content/weeks/*.md` | One file per week, named for its Monday. `plan` and `review` come from `node scripts/week-draft.mjs <monday>` (reads Intervals.icu with `INTERVALS_API_KEY` / `INTERVALS_ATHLETE_ID`); the body is the reasoning and the honest review. |
 | `src/pages/about.astro`, `newsletter.astro`, `watch-faces.astro` | About, newsletter signup, watch faces. |
 | `src/data/watchFaces.ts` | Every watch face on `/watch-faces/`. Flip `status` to `available` and add `storeUrl` when a store listing goes live. |
 | `src/data/season.ts` | The season phases drawn by `SeasonLine.astro`. |
