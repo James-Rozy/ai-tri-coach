@@ -1,0 +1,56 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import WeekPost from '../../components/WeekPost.astro';
+import Signup from '../../components/Signup.astro';
+
+const weeks = (await getCollection('weeks')).sort((a, b) => b.data.week.valueOf() - a.data.week.valueOf());
+const [latest, ...past] = weeks;
+const short = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+---
+<Base title="This week's training" description="My training plan for this week, the reasons behind it, and an honest look at last week, misses included. Updated every Monday.">
+  <header class="wrap section intro stack">
+    <p class="label">Training · updated every Monday</p>
+    <h1>This week’s plan</h1>
+    <p class="lede muted">
+      Every week my AI coach plans the next seven days from my real data. Here’s the plan, why it looks the way it
+      does, and how last week actually went.
+    </p>
+  </header>
+
+  <section class="wrap" aria-label="This week">
+    {latest ? <WeekPost entry={latest} /> : <p class="muted">The first week goes up soon.</p>}
+  </section>
+
+  {past.length > 0 && (
+    <section class="wrap section" aria-labelledby="past-h">
+      <h2 id="past-h" class="past-title">Past weeks</h2>
+      <ol class="past">
+        {past.map((w) => (
+          <li>
+            <a href={`/training/${w.id}/`}>
+              <span class="mono when">{short(w.data.week)}</span>
+              <span class="what">{w.data.title}</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )}
+
+  <div class="wrap section">
+    <Signup />
+  </div>
+</Base>
+
+<style>
+  @layer components {
+    .intro { --stack-gap: var(--space-s); padding-block-end: var(--space-m); }
+    .lede { font-size: var(--step-1); line-height: 1.5; max-inline-size: 44rem; }
+    .past-title { margin-block-end: var(--space-s); }
+    .past { list-style: none; padding: 0; max-inline-size: 48rem; border-block-start: 1px solid var(--line); }
+    .past a { display: grid; grid-template-columns: 8rem 1fr; gap: var(--space-s); padding-block: 0.8rem; border-block-end: 1px solid var(--line); text-decoration: none; }
+    .past a:hover .what { color: var(--accent); }
+    .when { color: var(--ink-faint); font-size: var(--step--1); }
+  }
+</style>
