@@ -1,0 +1,63 @@
+# Sends the weekly newsletter when a new week file lands on main.
+# Merging the weekly PR is the one approval: Cloudflare deploys /training/ and this schedules the email
+# for that Monday at 6am Chicago (or sends right away if that's passed). Weeks that have already ended are skipped.
+#
+# Repo secrets (Settings > Secrets and variables > Actions): RESEND_API_KEY, RESEND_SEGMENT_ID,
+# NEWSLETTER_POSTAL_ADDRESS, optional NEWSLETTER_REPLY_TO. Without the first two it does nothing.
+name: Newsletter
+
+on:
+  push:
+    branches: [main]
+    paths: ['src/content/weeks/**']
+  workflow_dispatch:
+    inputs:
+      week:
+        description: 'Monday of the week to send (YYYY-MM-DD)'
+        required: true
+      dry_run:
+        description: 'Build and check only, send nothing'
+        type: boolean
+        default: true
+
+concurrency: newsletter
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Find new week files
+        id: weeks
+        env:
+          BEFORE: ${{ github.event.before }}
+          INPUT_WEEK: ${{ inputs.week }}
+        run: |
+          if [ -n "$INPUT_WEEK" ]; then
+            weeks="$INPUT_WEEK"
+          else
+            # Only files added in this push, so editing an old week never re-sends it.
+            weeks=$(git diff --name-only --diff-filter=A "$BEFORE" "$GITHUB_SHA" -- src/content/weeks \
+              | sed -n 's#^src/content/weeks/\([0-9-]*\)\.md$#\1#p')
+          fi
+          echo "Weeks: ${weeks:-none}"
+          echo "list=$(echo $weeks)" >> "$GITHUB_OUTPUT"
+      - if: steps.weeks.outputs.list != ''
+        run: npm ci && npm run build
+      - if: steps.weeks.outputs.list != ''
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_SEGMENT_ID: ${{ secrets.RESEND_SEGMENT_ID }}
+          NEWSLETTER_POSTAL_ADDRESS: ${{ secrets.NEWSLETTER_POSTAL_ADDRESS }}
+          NEWSLETTER_REPLY_TO: ${{ secrets.NEWSLETTER_REPLY_TO }}
+          DRY_RUN: ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: |
+          for w in ${{ steps.weeks.outputs.list }}; do
+            node scripts/send-newsletter.mjs "$w" $DRY_RUN
+          done

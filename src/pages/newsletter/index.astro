@@ -1,27 +1,37 @@
 ---
-import Base from '../layouts/Base.astro';
-import Signup from '../components/Signup.astro';
+import Base from '../../layouts/Base.astro';
+import Signup from '../../components/Signup.astro';
 
 const inside = [
-  { label: 'The episode', body: 'The new video, and the training behind it.' },
-  { label: 'One prompt', body: 'A prompt I actually used that fortnight, ready to copy into your own coach.' },
-  { label: 'The numbers', body: 'Hours, sessions done and missed, and what my coach changed because of them.' },
-  { label: 'The miss', body: 'Whatever went wrong, and what I’m changing because of it.' },
+  { label: 'The plan', body: 'Every session for the week ahead, straight from my training calendar.' },
+  { label: 'The why', body: 'The reasoning behind the week in plain language, the way my coach explained it to me.' },
+  { label: 'The numbers', body: 'Last week’s hours and sessions, planned vs done.' },
+  { label: 'The miss', body: 'Whatever went wrong, and what changes because of it. Plus the new episode when there is one.' },
 ];
+
+// Errors come back from the signup Worker as ?error=... (see worker/index.js).
+const errors: Record<string, string> = {
+  email: 'That email address doesn’t look right. Try again?',
+  link: 'That confirm link is invalid or more than 7 days old. Sign up again and I’ll send a fresh one.',
+  send: 'Something went wrong on my end. Try again in a minute.',
+  closed: 'Signup isn’t open yet. Check back soon.',
+};
 ---
-<Base title="Newsletter" description="Every other Sunday: the new episode, one coaching prompt you can copy, and the real numbers from my Ironman build.">
+<Base title="Newsletter" description="Every Monday: my training plan for the week, the reasoning behind it, and how last week actually went. Free.">
   <section class="wrap section hero">
     <div class="stack copy">
-      <p class="label">Newsletter · every other Sunday</p>
-      <h1>Two weeks of training, in one email.</h1>
+      <p class="label">Newsletter · every Monday</p>
+      <h1>My training week, in one email.</h1>
       <p class="lede muted">
         Short, honest and useful even if you never watch the videos. Free, and one click to leave.
       </p>
+      <p class="error mono" role="alert" hidden data-errors={JSON.stringify(errors)}></p>
       <Signup variant="bare" />
+      <p class="muted small">Want to see one first? <a href="/training/">Here’s this week’s plan.</a></p>
     </div>
 
     <div class="issue mono" aria-label="What’s in each issue">
-      <div class="issue-head"><span>Issue format</span><span>Every other Sunday</span></div>
+      <div class="issue-head"><span>Issue format</span><span>Every Monday</span></div>
       <ol>
         {inside.map((x, i) => (
           <li>
@@ -35,6 +45,14 @@ const inside = [
   </section>
 </Base>
 
+<script>
+  // Static page, so read the error code in the browser. Unknown codes are ignored.
+  const el = document.querySelector<HTMLElement>('.error');
+  const code = new URLSearchParams(location.search).get('error');
+  const msg = el && code ? JSON.parse(el.dataset.errors ?? '{}')[code] : undefined;
+  if (el && msg) { el.textContent = msg; el.hidden = false; }
+</script>
+
 <style>
   @layer components {
     .hero {
@@ -46,6 +64,8 @@ const inside = [
     }
     .copy { --stack-gap: var(--space-m); }
     .lede { font-size: var(--step-1); line-height: 1.5; }
+    .error { color: var(--accent); border: 1px solid var(--accent); border-radius: 6px; padding: 0.6em 0.9em; font-size: var(--step--1); }
+    .small { font-size: var(--step--1); }
     .issue {
       background: var(--surface);
       border: 1px solid var(--line);

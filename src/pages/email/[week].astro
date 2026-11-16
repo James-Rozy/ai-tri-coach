@@ -1,0 +1,131 @@
+---
+// The newsletter email for one week, built to /email/<monday>/ (not linked, not in the sitemap).
+// .github/workflows/newsletter.yml sends this HTML through Resend when a new week file lands on main.
+// Email clients ignore most modern CSS, so this is tables and inline styles on purpose, not the site's CSS.
+import { getCollection, render } from 'astro:content';
+import { hm, weekRange, plannedMinutes, sessionCount, missedCount, statusLabel, reviewMins, sportHex } from '../../lib/week';
+
+export async function getStaticPaths() {
+  const weeks = await getCollection('weeks');
+  return weeks.map((entry) => ({ params: { week: entry.id }, props: { entry } }));
+}
+const { entry } = Astro.props;
+const d = entry.data;
+const { Content } = await render(entry);
+const site = 'https://splitdecisionscoach.com';
+const pageUrl = `${site}/training/${entry.id}/`;
+const r = d.review;
+const missed = missedCount(d);
+
+const c = { bg: '#0E1116', surface: '#151A21', lcd: '#18212B', line: '#262C36', ink: '#F2F4F7', muted: '#A9B2C0', faint: '#7D8796', accent: '#FFB020' };
+const mono = "font-family:Menlo,Consolas,'Courier New',monospace";
+const sans = 'font-family:Helvetica,Arial,sans-serif';
+const cell = `padding:10px 8px;border-bottom:1px solid ${c.line};vertical-align:top;font-size:14px;line-height:1.4`;
+const stats = [
+  { label: 'Planned', value: hm(plannedMinutes(d)), flag: false },
+  { label: 'Sessions', value: String(sessionCount(d)), flag: false },
+  ...(r ? [{ label: 'Last week', value: `${hm(r.doneMinutes)}/${hm(r.plannedMinutes)}`, flag: false }, { label: 'Missed', value: String(missed), flag: missed > 0 }] : []),
+];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <meta name="color-scheme" content="dark" />
+    <title>{d.title}</title>
+    <style is:inline>
+      .body h2 { margin: 26px 0 10px; font: 900 17px/1.2 Helvetica, Arial, sans-serif; text-transform: uppercase; color: #F2F4F7; }
+      .body p { margin: 0 0 12px; }
+      .body ul { margin: 0 0 12px; padding-left: 20px; }
+      .body li { margin: 0 0 8px; }
+      .body strong { color: #F2F4F7; }
+      .body a { color: #FFB020; }
+    </style>
+  </head>
+  <body style={`margin:0;padding:0;background:${c.bg}`}>
+    <div style="display:none;max-height:0;overflow:hidden">{d.summary}</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style={`background:${c.bg}`}>
+      <tr><td align="center" style="padding:28px 12px">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px">
+          <tr><td style={`${mono};font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:${c.faint};padding-bottom:14px`}>
+            <span style={`color:${c.accent}`}>Split Decisions</span> · Week of {weekRange(d.week)} · {d.phase}
+          </td></tr>
+          <tr><td style={`${sans};color:${c.ink};font-size:30px;font-weight:900;line-height:1.08;padding-bottom:10px`}>{d.title}</td></tr>
+          <tr><td style={`${sans};color:${c.muted};font-size:17px;line-height:1.45;padding-bottom:20px`}>{d.summary}</td></tr>
+
+          <tr><td style="padding-bottom:22px">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style={`background:${c.lcd};border:1px solid ${c.line};border-radius:10px`}>
+              {[stats.slice(0, 2), stats.slice(2)].filter((row) => row.length).map((row) => (
+                <tr>
+                  {row.map((s) => (
+                    <td width="50%" style={`padding:12px 14px;${mono}`}>
+                      <div style={`font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:${c.faint}`}>{s.label}</div>
+                      <div style={`font-size:20px;font-weight:600;color:${s.flag ? c.accent : c.ink};white-space:nowrap`}>{s.value}</div>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </table>
+          </td></tr>
+
+          <tr><td style={`${mono};font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:${c.accent};padding-bottom:6px`}>The plan</td></tr>
+          <tr><td style="padding-bottom:8px">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style={`border-top:1px solid ${c.line}`}>
+              {d.plan.map((p) => (
+                <tr>
+                  <td style={`${cell};${mono};color:${c.faint};width:40px;font-size:12px`}>{p.day.toUpperCase()}</td>
+                  <td style={`${cell};${mono};color:${sportHex[p.sport]};width:80px;font-size:11px;font-weight:600`}>{p.sport.toUpperCase()}</td>
+                  <td style={`${cell};${sans};color:${c.ink}`}>{p.session}{p.note && <span style={`color:${c.faint}`}> · {p.note}</span>}</td>
+                  <td align="right" style={`${cell};${mono};color:${c.muted};white-space:nowrap;font-size:12px`}>{p.minutes ? `${p.minutes}′` : ''}</td>
+                </tr>
+              ))}
+            </table>
+          </td></tr>
+
+          <tr><td class="body" style={`${sans};color:${c.muted};font-size:16px;line-height:1.55`}><Content /></td></tr>
+
+          {r && (
+            <>
+              <tr><td style={`${mono};font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:${c.accent};padding:16px 0 6px`}>Last week, planned vs done</td></tr>
+              <tr><td style="padding-bottom:8px">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style={`border-top:1px solid ${c.line}`}>
+                  {r.items.map((i) => {
+                    const isMiss = i.status === 'missed';
+                    return (
+                      <tr>
+                        <td style={`${cell};${mono};color:${c.faint};width:40px;font-size:12px`}>{i.day.toUpperCase()}</td>
+                        <td style={`${cell};${mono};color:${isMiss ? c.accent : i.status === 'extra' ? c.muted : sportHex[i.sport]};width:80px;font-size:11px;font-weight:600`}>{statusLabel[i.status].toUpperCase()}</td>
+                        <td style={`${cell};${sans};color:${isMiss ? c.muted : c.ink};${isMiss ? `text-decoration:line-through;text-decoration-color:${c.accent}` : ''}`}>
+                          {i.session}{i.note && <span style={`color:${c.faint};text-decoration:none`}> · {i.note}</span>}
+                        </td>
+                        <td align="right" style={`${cell};${mono};color:${c.muted};white-space:nowrap;font-size:12px`}>{reviewMins(i)}</td>
+                      </tr>
+                    );
+                  })}
+                </table>
+              </td></tr>
+            </>
+          )}
+
+          {d.video && (
+            <tr><td style={`${sans};padding-top:18px;font-size:16px`}><a href={d.video} style={`color:${c.accent};font-weight:700`}>Watch this week’s episode →</a></td></tr>
+          )}
+
+          <tr><td style="padding:26px 0 30px">
+            <a href={pageUrl} style={`display:inline-block;background:${c.accent};color:${c.bg};${sans};font-weight:700;text-decoration:none;padding:12px 22px;border-radius:6px`}>See it on the site</a>
+          </td></tr>
+
+          <tr><td style={`border-top:1px solid ${c.line};padding-top:18px;${sans};font-size:12px;line-height:1.6;color:${c.faint}`}>
+            You’re getting this because you signed up at splitdecisionscoach.com. One email every Monday.{' '}
+            <a href="{{{RESEND_UNSUBSCRIBE_URL}}}" style={`color:${c.muted}`}>Unsubscribe</a>{' · '}
+            <a href="https://www.youtube.com/@splitdecisionscoach" style={`color:${c.muted}`}>YouTube</a><br />
+            Not medical advice. My plan is for me; use it as an example, not a prescription.<br />
+            %%POSTAL_ADDRESS%%
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>

@@ -1,0 +1,29 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import WeekPost from '../../components/WeekPost.astro';
+import Signup from '../../components/Signup.astro';
+
+export async function getStaticPaths() {
+  const weeks = await getCollection('weeks');
+  return weeks.map((entry) => ({ params: { week: entry.id }, props: { entry } }));
+}
+const { entry } = Astro.props;
+---
+<Base title={entry.data.title} description={entry.data.summary}>
+  <div class="wrap section">
+    <p class="mono back"><a href="/training/">← All weeks</a></p>
+    <WeekPost entry={entry} level="h1" />
+  </div>
+  <div class="wrap section">
+    <Signup />
+  </div>
+</Base>
+
+<style>
+  @layer components {
+    .back { font-size: var(--step--1); margin-block-end: var(--space-m); }
+    .back a { color: var(--ink-faint); text-decoration: none; }
+    .back a:hover { color: var(--accent); }
+  }
+</style>

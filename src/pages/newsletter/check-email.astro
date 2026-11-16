@@ -1,0 +1,21 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+<Base title="Check your email" description="One more step: confirm your email to get the Split Decisions newsletter.">
+  <section class="wrap section stack done">
+    <p class="label">Newsletter · step 2 of 2</p>
+    <h1>Check your email</h1>
+    <p class="lede muted">
+      I just sent you a link. Tap it to confirm and you’ll get the plan every Monday. If it’s not there in a minute or
+      two, check spam or promotions.
+    </p>
+    <p><a href="/training/">Meanwhile, here’s this week’s plan <span class="arrow" aria-hidden="true">→</span></a></p>
+  </section>
+</Base>
+
+<style>
+  @layer components {
+    .done { --stack-gap: var(--space-s); min-block-size: 55vh; align-content: center; max-inline-size: 42rem; }
+    .lede { font-size: var(--step-1); line-height: 1.5; }
+  }
+</style>

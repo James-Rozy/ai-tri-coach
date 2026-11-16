@@ -18,7 +18,9 @@ npm run build    # static output in dist/
 | `src/pages/guide/index.astro` | The free guide (four prompts + setup). `/kit/` redirects here. |
 | `src/pages/progress/index.astro` | My Progress: season line plus every update, newest first. |
 | `src/content/updates/*.md` | One file per progress update. Frontmatter: `title`, `date`, `phase`, `summary`, optional `stats`, `splits`, `video`. |
-| `src/pages/about.astro`, `newsletter.astro`, `watch-faces.astro` | About, newsletter signup, watch faces. |
+| `src/pages/training/` | This week's training: the latest week in full, past weeks listed, one page per week. |
+| `src/content/weeks/*.md` | One file per week, named for its Monday. `plan` and `review` come from `node scripts/week-draft.mjs <monday>` (reads Intervals.icu with `INTERVALS_API_KEY` / `INTERVALS_ATHLETE_ID`); the body is the reasoning and the honest review. |
+| `src/pages/about.astro`, `newsletter/`, `watch-faces.astro` | About, newsletter signup (plus check-email and confirmed pages), watch faces. |
 | `src/data/watchFaces.ts` | Every watch face on `/watch-faces/`. Flip `status` to `available` and add `storeUrl` when a store listing goes live. |
 | `src/data/season.ts` | The season phases drawn by `SeasonLine.astro`. |
 | `src/components/watchface/` | React island: the live SD Digital Tri preview, ported from the watch face mockup's canvas code. |
@@ -32,8 +34,13 @@ Already wired: native cross-document view transitions (`@view-transition`), with
 
 The React integration (`@astrojs/react`) is on, so interactive pieces can be written as `.tsx` components and used in any `.astro` page. A React component renders to static HTML and ships no JS unless you give it a `client:*` directive (`client:visible`, `client:load`, `client:idle`), so only the interactive islands cost anything.
 
+## Newsletter (Resend)
+
+- **Signup:** the form posts to `worker/index.js` (`/api/subscribe`), which emails a confirm link. `/api/confirm` adds the address to the Resend segment. No database; the link is signed with `SIGNUP_SECRET` and lasts 7 days. Unsubscribe is Resend's link in every email.
+- **Weekly email:** `src/pages/email/[week].astro` builds the email from the same week file as `/training/`. When a new `src/content/weeks/*.md` lands on main, `.github/workflows/newsletter.yml` runs `scripts/send-newsletter.mjs`, which schedules it for that Monday at 6am Chicago (or sends right away if that's passed; weeks already over are skipped). Run the workflow by hand with `dry_run` to check a week without sending.
+- **Settings:** Cloudflare Worker secrets `RESEND_API_KEY`, `SIGNUP_SECRET`, `RESEND_SEGMENT_ID` (optional `NEWSLETTER_REPLY_TO`). GitHub Actions secrets `RESEND_API_KEY`, `RESEND_SEGMENT_ID`, `NEWSLETTER_POSTAL_ADDRESS` (optional `NEWSLETTER_REPLY_TO`). Sender is `NEWSLETTER_FROM` in `wrangler.jsonc`.
+
 ## Open items
 
-- Signup form is disabled until an email provider is picked.
 - Stripe, logins and paid prompts wait for the paid tier (planned ~Feb 2027).
 - Connect IQ Store link for SD Digital Tri once it's published.

@@ -34,4 +34,46 @@ const updates = defineCollection({
   }),
 });
 
-export const collections = { prompts, updates };
+// Weekly training posts on /training/ and in the newsletter: one file per week, named for its Monday.
+// `plan` and `review` are drafted by scripts/week-draft.mjs from Intervals.icu; the body is the reasoning.
+const sport = z.enum(['Swim', 'Bike', 'Run', 'Strength', 'Polo', 'Rest', 'Travel', 'Other']);
+const weeks = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/weeks' }),
+  schema: z.object({
+    week: z.coerce.date(),
+    phase: z.enum(['Off-season', 'Base', 'Build', 'Taper', 'Race']),
+    title: z.string(),
+    summary: z.string(),
+    plan: z.array(
+      z.object({
+        day: z.enum(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']),
+        date: z.coerce.date().optional(),
+        sport,
+        session: z.string(),
+        minutes: z.number().optional(),
+        note: z.string().optional(),
+      }),
+    ),
+    // Last week, honestly: every planned session and what happened to it.
+    review: z
+      .object({
+        items: z.array(
+          z.object({
+            day: z.enum(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']),
+            sport,
+            session: z.string(),
+            minutes: z.number().optional(),
+            actualMinutes: z.number().optional(),
+            status: z.enum(['done', 'missed', 'swapped', 'extra', 'rest']),
+            note: z.string().optional(),
+          }),
+        ),
+        plannedMinutes: z.number(),
+        doneMinutes: z.number(),
+      })
+      .optional(),
+    video: z.string().url().optional(),
+  }),
+});
+
+export const collections = { prompts, updates, weeks };
