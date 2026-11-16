@@ -11,18 +11,20 @@ const id = `email-${Math.random().toString(36).slice(2, 8)}`;
     <div class="stack">
       <h2 id={`${id}-h`}>Follow the build</h2>
       <p class="muted">
-        Every other Sunday: the new episode, one prompt from that week of training, and the numbers. Including the weeks
+        Every Monday: my plan for the week, why it looks that way, and how last week actually went. Including the weeks
         that go badly.
       </p>
     </div>
   )}
-  <!-- TODO: point this at the email provider once it's picked. Disabled until then. -->
-  <form class="form" action="#" method="post" aria-describedby={`${id}-note`}>
+  <!-- Posts to the Worker (worker/index.js), which emails a confirm link. Works without JS. -->
+  <form class="form" action="/api/subscribe" method="post" aria-describedby={`${id}-note`}>
     <label class="visually-hidden" for={id}>Email</label>
-    <input id={id} name="email" type="email" placeholder="you@example.com" autocomplete="email" required disabled />
-    <button type="submit" disabled>Sign me up</button>
+    <input id={id} name="email" type="email" placeholder="you@example.com" autocomplete="email" required />
+    <!-- Honeypot for bots: hidden from people and screen readers. -->
+    <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
+    <button type="submit">Sign me up</button>
   </form>
-  <p id={`${id}-note`} class="note mono">Signup opens soon. In the meantime, follow <a href="https://www.youtube.com/@splitdecisionscoach">@splitdecisionscoach on YouTube</a>.</p>
+  <p id={`${id}-note`} class="note mono">Free. I'll email you a link to confirm. Your address is only used for this newsletter (sent with Resend), and every email has a one-click unsubscribe.</p>
 </section>
 
 <style>
@@ -66,7 +68,8 @@ const id = `email-${Math.random().toString(36).slice(2, 8)}`;
       color: var(--on-accent);
       font-weight: 700;
     }
-    :disabled { opacity: 0.6; cursor: not-allowed; }
+    button { cursor: pointer; }
+    .hp { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; pointer-events: none; }
     .note { font-size: 0.8rem; color: var(--ink-faint); }
     .note a { color: var(--ink-muted); }
   }

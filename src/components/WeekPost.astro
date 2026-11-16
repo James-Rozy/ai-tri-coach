@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import { render } from 'astro:content';
+import { hm, weekRange as range, plannedMinutes, sessionCount, missedCount, statusLabel, reviewMins, sportVar } from '../lib/week';
 
 interface Props {
   entry: CollectionEntry<'weeks'>;
@@ -12,28 +13,11 @@ const { Content } = await render(entry);
 const d = entry.data;
 const Heading = level;
 
-const sportColor: Record<string, string> = {
-  Swim: 'var(--swim)', Polo: 'var(--swim)', Bike: 'var(--bike)', Run: 'var(--run)',
-  Strength: 'var(--accent)', Rest: 'var(--trans)', Travel: 'var(--trans)', Other: 'var(--trans)',
-};
-const hm = (m: number) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
-const range = (start: Date) => {
-  const end = new Date(start);
-  end.setUTCDate(end.getUTCDate() + 6);
-  const f = (x: Date) => x.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
-  return `${f(start)} – ${f(end)}`;
-};
-const plannedMin = d.plan.reduce((s, p) => s + (p.minutes ?? 0), 0);
-const sessions = d.plan.filter((p) => !['Rest', 'Travel'].includes(p.sport)).length;
-const statusLabel = { done: 'Done', missed: 'Missed', swapped: 'Swapped', extra: 'Extra', rest: 'Rest' } as const;
 const r = d.review;
-// "70′/70′" when a planned session happened, otherwise whichever number exists.
-const reviewMins = (i: { minutes?: number; actualMinutes?: number; status: string }) => {
-  if (i.status !== 'extra' && i.minutes != null && i.actualMinutes != null) return `${i.actualMinutes}′/${i.minutes}′`;
-  const m = i.actualMinutes ?? i.minutes;
-  return m != null ? `${m}′` : '';
-};
-const missed = r?.items.filter((i) => i.status === 'missed').length ?? 0;
+const plannedMin = plannedMinutes(d);
+const sessions = sessionCount(d);
+const missed = missedCount(d);
+const sportColor = sportVar;
 ---
 <article class="week">
   <header class="head">
