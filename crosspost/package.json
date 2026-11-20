@@ -1,0 +1,19 @@
+{
+  "name": "split-decisions-crosspost",
+  "private": true,
+  "type": "module",
+  "description": "Post one vertical Short to YouTube Shorts, Instagram Reels and TikTok through their official APIs.",
+  "scripts": {
+    "crosspost": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts",
+    "check": "npm run crosspost -- check",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --no-warnings=ExperimentalWarning --test test/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}
