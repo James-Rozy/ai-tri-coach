@@ -1,0 +1,4 @@
+node_modules/
+*.posted.json
+*.mp4
+*.mov

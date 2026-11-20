@@ -5,7 +5,8 @@
     "**/*"
   ],
   "exclude": [
-    "dist"
+    "dist",
+    "crosspost"
   ],
   "compilerOptions": {
     "jsx": "react-jsx",

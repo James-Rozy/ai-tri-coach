@@ -24,6 +24,7 @@ npm run build    # static output in dist/
 | `src/components/watchface/` | React island: the live SD Digital Tri preview, ported from the watch face mockup's canvas code. |
 | `src/components/Logo.astro` | The LCD logo: "SD" in segment digits, same geometry as the watch face. `public/favicon.svg` is the same mark. |
 | `src/content/prompts/*.md` | One file per prompt. Frontmatter: `title`, `order`, `summary`, `useWhen`, `tier` (`free` or `paid`). Body is the prompt text. |
+| `crosspost/` | Command-line tool that posts a Short to YouTube (Instagram and TikTok next). Separate package; see its README. |
 | `src/styles/global.css` | Cascade layers, OKLCH tokens, swim/bike/run colors, the shared `.button`. |
 
 Already wired: native cross-document view transitions (`@view-transition`), with prompt cards morphing into their prompt page through a shared `view-transition-name`, plus reduced-motion handling.
